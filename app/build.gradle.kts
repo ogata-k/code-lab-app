@@ -31,6 +31,24 @@ android {
             )
         }
     }
+
+    flavorDimensions += listOf("default")
+    productFlavors {
+        create("develop") {
+            dimension = "default"
+            applicationIdSuffix = ".dev"
+        }
+
+        create("staging") {
+            dimension = "default"
+            applicationIdSuffix = ".stg"
+        }
+
+        create("product") {
+            dimension = "default"
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

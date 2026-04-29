@@ -4,6 +4,16 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
+ * UI状態のマーカーインターフェース
+ */
+interface UiState
+
+/**
+ * UI状態の更新から見たときの副作用のマーカーインターフェース
+ */
+interface UiEffect
+
+/**
  * ユーザー操作イベントのマーカーインターフェース
  */
 interface Intent
@@ -17,16 +27,6 @@ interface Action
  * UI状態を更新するミューテーションのマーカーインターフェース
  */
 interface Mutation
-
-/**
- * UI状態の更新から見たときの副作用のマーカーインターフェース
- */
-interface UiEffect
-
-/**
- * UI状態のマーカーインターフェース
- */
-interface UiState
 
 /**
  * Intentを処理する前に実行したい処理、つまり利用者のUI操作用のミドルウェア。

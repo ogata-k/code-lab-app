@@ -30,7 +30,7 @@ android {
 
 dependencies {
     // For my modules
-    implementation(project(":app:common"))
+    implementation(project(":common"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

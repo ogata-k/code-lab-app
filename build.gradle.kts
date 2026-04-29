@@ -6,3 +6,6 @@ plugins {
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.ksp) apply false
 }
+
+// appでfeatureを作るときに必要になるボイラープレートを生成
+apply(from = "gradle/generate-feature.gradle.kts")

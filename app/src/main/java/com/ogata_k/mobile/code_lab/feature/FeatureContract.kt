@@ -101,6 +101,6 @@ interface Reducer<US : UiState, M : Mutation> {
  */
 interface Store<US : UiState, UE : UiEffect, I : Intent> {
     val uiState: StateFlow<US>
-    val uiEffects: SharedFlow<UE>
+    val uiEffect: SharedFlow<UE>
     fun dispatch(intent: I)
 }

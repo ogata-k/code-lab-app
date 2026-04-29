@@ -29,12 +29,12 @@ abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent, M : Mutati
      */
     override val uiState: StateFlow<US> = _uiState.asStateFlow()
 
-    private val _uiEffects = MutableSharedFlow<UE>()
+    private val _uiEffect = MutableSharedFlow<UE>()
 
     /**
      * UI用のサイドエフェクト。一度消費したら保持しないようにSharedFlowになっている。
      */
-    override val uiEffects: SharedFlow<UE> = _uiEffects.asSharedFlow()
+    override val uiEffect: SharedFlow<UE> = _uiEffect.asSharedFlow()
 
     private val stateManagerScope = object : StateManagerScope<US, UE, M> {
         override fun getUiState(): US {
@@ -65,7 +65,7 @@ abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent, M : Mutati
     // @todo 必要ならEventBusからのイベントをもとにstateManager.executeActionPipelineで処理するリスナーを登録してもいいかも
 
     protected suspend fun emitUiEffect(effect: UE) {
-        _uiEffects.emit(effect)
+        _uiEffect.emit(effect)
     }
 
     protected fun emitMutation(mutation: M) {

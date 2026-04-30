@@ -28,7 +28,9 @@ tasks.register("generateFeature") {
                 /**
                  * $featureName のUI状態
                  */
-               sealed interface ${featureName}UiState : UiState
+                sealed interface ${featureName}UiState : UiState {
+                    data object UnInitialized : ${featureName}UiState
+                }
             """.trimIndent(),
 
             "${featureName}UiEffect.kt" to """
@@ -41,16 +43,6 @@ tasks.register("generateFeature") {
                 sealed interface ${featureName}UiEffect : UiEffect
             """.trimIndent(),
 
-            "${featureName}Intent.kt" to """
-                package $packageName
-                import com.ogata_k.mobile.code_lab.feature.Intent
-                
-                /**
-                 * $featureName に対するユーザーの意図（操作）
-                 */
-                sealed interface ${featureName}Intent : Intent
-            """.trimIndent(),
-
             "${featureName}Action.kt" to """
                 package $packageName
                 import com.ogata_k.mobile.code_lab.feature.Action
@@ -58,7 +50,19 @@ tasks.register("generateFeature") {
                 /**
                  * $featureName の内部で処理されるアクション
                  */
-                sealed interface ${featureName}Action : Action
+                sealed interface ${featureName}Action : Action {
+                    data object Initialize : ${featureName}Action
+                }
+            """.trimIndent(),
+
+            "${featureName}Intent.kt" to """
+                package $packageName
+                import com.ogata_k.mobile.code_lab.feature.Intent
+                
+                /**
+                 * $featureName に対するユーザーの意図（操作）
+                 */
+                sealed interface ${featureName}Intent : Intent<${featureName}Action>
             """.trimIndent(),
 
             "${featureName}Mutation.kt" to """
@@ -74,12 +78,24 @@ tasks.register("generateFeature") {
             "${featureName}ActionProcessor.kt" to """
                 package $packageName
                 import com.ogata_k.mobile.code_lab.feature.ActionProcessor
+                import com.ogata_k.mobile.code_lab.feature.StateManagerScope
                 import javax.inject.Inject
                 
                 /**
                  * $featureName のアクションを処理し、ミューテーションを生成するクラス
                  */
-                class ${featureName}ActionProcessor @Inject constructor() : ActionProcessor
+                class ${featureName}ActionProcessor @Inject constructor() : ActionProcessor<${featureName}UiState, ${featureName}UiEffect, ${featureName}Action, ${featureName}Mutation> {
+                    override suspend fun process(
+                        action: ${featureName}Action,
+                        scope: StateManagerScope<${featureName}UiState, ${featureName}UiEffect, ${featureName}Mutation>
+                    ) {
+                        when (action) {
+                            is ${featureName}Action.Initialize -> {
+                                // TODO: 初期化処理
+                            }
+                        }
+                    }
+                }
             """.trimIndent(),
 
             "${featureName}Reducer.kt" to """
@@ -102,26 +118,19 @@ tasks.register("generateFeature") {
             "${featureName}StateManager.kt" to """
                 package $packageName
                 import com.ogata_k.mobile.code_lab.feature.BaseStateManager
-                import com.ogata_k.mobile.code_lab.feature.StateManagerScope
                 import javax.inject.Inject
                 
                 /**
                  * $featureName の状態管理を統括するクラス
                  */
                 class ${featureName}StateManager @Inject constructor(
-                    private val processor: ${featureName}ActionProcessor
-                ) : BaseStateManager<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>() {
-                    override fun mapIntentToAction(intent: ${featureName}Intent): ${featureName}Action {
-                        TODO("Not yet implemented")
-                    }
-                    
-                    override suspend fun handleAction(
-                        action: ${featureName}Action,
-                        scope: StateManagerScope<${featureName}UiState, ${featureName}UiEffect, ${featureName}Mutation>
-                    ) {
-                        TODO("Not yet implemented")
-                    }
-                }
+                    processor: ${featureName}ActionProcessor,
+                    reducer: ${featureName}Reducer
+                ) : BaseStateManager<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>(
+                    initialState = ${featureName}UiState.UnInitialized,
+                    actionProcessor = processor,
+                    reducer = reducer
+                )
             """.trimIndent(),
 
             "${featureName}ViewModel.kt" to """
@@ -135,12 +144,15 @@ tasks.register("generateFeature") {
                  */
                 @HiltViewModel
                 class ${featureName}ViewModel @Inject constructor(
-                    processor: ${featureName}ActionProcessor
-                ) : BaseViewModel<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Mutation>(
-                    initialState = TODO("NEXT set initial state here FOR ${featureName}UiState"),
-                    stateManager = ${featureName}StateManager(processor = processor),
-                    reducer = ${featureName}Reducer()
-                )
+                    stateManager: ${featureName}StateManager
+                ) : BaseViewModel<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>(
+                    stateManager = stateManager
+                ) {
+                    init {
+                        // 初期データのロード
+                        dispatchAction(${featureName}Action.Initialize)
+                    }
+                }
             """.trimIndent(),
 
             "${featureName}Route.kt" to """
@@ -161,19 +173,15 @@ tasks.register("generateFeature") {
                 ) {
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                     
-                    LaunchedEffect(Unit) {
-                        TODO("launch viewmodel initial loading")
-                    }
-    
                     LaunchedEffect(viewModel.uiEffect) {
                         viewModel.uiEffect.collectLatest { effect ->
-                            // @todo Handle effect
+                            // TODO: Handle effect
                         }
                     }
                     
                     ${featureName}Screen(
                         uiState = uiState,
-                        onIntent = { viewModel.dispatch(it) }
+                        onIntent = { viewModel.dispatchIntent(it) }
                     )
                 }
             """.trimIndent(),
@@ -201,9 +209,9 @@ tasks.register("generateFeature") {
             val file = targetDir.resolve(fileName)
             if (!file.exists()) {
                 file.writeText(content)
-                println("Generated: ${fileName}")
+                println("Generated: ${'$'}fileName")
             } else {
-                println("Skipped (already exists): ${fileName}")
+                println("Skipped (already exists): ${'$'}fileName")
             }
         }
     }

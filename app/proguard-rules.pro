@@ -19,3 +19,7 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# リリースビルドに含みたくないログ出力を削除 (R8専用設定)
+# 4を指定することで、Verbose(2), Debug(3), Info(4) のログがコンパイル時に削除される。
+-maximumremovedandroidloglevel 4

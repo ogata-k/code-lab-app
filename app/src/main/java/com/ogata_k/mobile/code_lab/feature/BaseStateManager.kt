@@ -1,6 +1,6 @@
 package com.ogata_k.mobile.code_lab.feature
 
-import android.util.Log
+import com.ogata_k.mobile.code_lab.common.logV
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -89,17 +89,18 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     }
 
     protected suspend fun emitUiEffect(effect: UE) {
-        Log.v("StateManager", "emit UiEffect: $effect")
+        logV("StateManager") { "emit UiEffect: $effect" }
         _uiEffect.send(effect)
     }
 
     protected suspend fun emitMutation(mutation: M) {
         _uiState.update { currentUiState ->
             val nextUiState = reducer.reduce(currentUiState, mutation)
-            Log.v(
-                "StateManager",
+            logV(
+                "StateManager"
+            ) {
                 "emit Mutation: $mutation, from UiState: $currentUiState, to UiState: $nextUiState"
-            )
+            }
             nextUiState
         }
     }

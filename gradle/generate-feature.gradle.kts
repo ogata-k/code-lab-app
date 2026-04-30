@@ -110,6 +110,7 @@ tasks.register("generateFeature") {
                         currentState: ${featureName}UiState,
                         mutation: ${featureName}Mutation
                     ): ${featureName}UiState {
+                        // TODO: 実際の変換処理
                         return currentState
                     }
                 }
@@ -124,11 +125,11 @@ tasks.register("generateFeature") {
                  * $featureName の状態管理を統括するクラス
                  */
                 class ${featureName}StateManager @Inject constructor(
-                    processor: ${featureName}ActionProcessor,
+                    actionProcessor: ${featureName}ActionProcessor,
                     reducer: ${featureName}Reducer
                 ) : BaseStateManager<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>(
                     initialState = ${featureName}UiState.UnInitialized,
-                    actionProcessor = processor,
+                    actionProcessor = actionProcessor,
                     reducer = reducer
                 )
             """.trimIndent(),
@@ -161,8 +162,10 @@ tasks.register("generateFeature") {
                 import androidx.compose.runtime.LaunchedEffect
                 import androidx.compose.runtime.getValue
                 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+                import androidx.lifecycle.Lifecycle
+                import androidx.lifecycle.compose.LocalLifecycleOwner
                 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-                import kotlinx.coroutines.flow.collectLatest
+                import androidx.lifecycle.repeatOnLifecycle
                 
                 /**
                  * $featureName のナビゲーションルートとなるComposable関数
@@ -173,12 +176,16 @@ tasks.register("generateFeature") {
                 ) {
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                     
-                    LaunchedEffect(viewModel.uiEffect) {
-                        viewModel.uiEffect.collectLatest { effect ->
-                            // TODO: Handle effect
+                    val lifecycle = LocalLifecycleOwner.current
+                    
+                    LaunchedEffect(viewModel.uiEffect, lifecycle) {
+                        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                            viewModel.uiEffect.collect { effect ->
+                                // TODO: Handle effect
+                            }
                         }
                     }
-                    
+
                     ${featureName}Screen(
                         uiState = uiState,
                         onIntent = { viewModel.dispatchIntent(it) }

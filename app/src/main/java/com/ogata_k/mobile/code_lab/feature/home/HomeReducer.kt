@@ -9,6 +9,7 @@ class HomeReducer : Reducer<HomeUiState, HomeMutation> {
         currentState: HomeUiState,
         mutation: HomeMutation
     ): HomeUiState {
+        // TODO: 実際の変換処理
         return currentState
     }
 }

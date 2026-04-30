@@ -31,7 +31,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     protected val _uiEffect = Channel<UE>(Channel.BUFFERED)
 
     /**
-     * UI用のサイドエフェクト。一度消費したら保持しないようにSharedFlowになっている。
+     * UI用のサイドエフェクト。SharedFlowもいいがナビゲーションにも使うので二重発火をさけるためにもChannelにしている。
      */
     val uiEffect: Flow<UE> = _uiEffect.receiveAsFlow()
 

@@ -1,6 +1,6 @@
 package com.ogata_k.mobile.code_lab.feature
 
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -86,7 +86,7 @@ interface ActionProcessor<US : UiState, UE : UiEffect, A : Action, M : Mutation>
 interface StateManagerScope<US : UiState, UE : UiEffect, M : Mutation> {
     fun getUiState(): US
     suspend fun emitUiEffect(effect: UE)
-    fun emitMutation(mutation: M)
+    suspend fun emitMutation(mutation: M)
 }
 
 /**
@@ -105,6 +105,6 @@ interface Reducer<US : UiState, M : Mutation> {
  */
 interface Store<US : UiState, UE : UiEffect, I : Intent<A>, A : Action> {
     val uiState: StateFlow<US>
-    val uiEffect: SharedFlow<UE>
+    val uiEffect: Flow<UE>
     fun dispatchIntent(intent: I)
 }

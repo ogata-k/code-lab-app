@@ -2,10 +2,8 @@ package com.ogata_k.mobile.code_lab.feature
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
@@ -24,15 +22,10 @@ abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent<A>, A : Act
 
     // @todo 必要ならstateManager.actionProcessorのイベントをここで監視して、必要ならstateManager.executeActionPipelineで処理するリスナーを登録する
 
-    // uiStateは合成して作られているColdフローの可能性があるのでstateInでHotにしておく
-    override val uiState: StateFlow<US> = stateManager.uiState.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = stateManager.uiState.value,
-    )
+    override val uiState: StateFlow<US> = stateManager.uiState
 
     // uiEffectはemitされたUiEffectを流すだけなので合成を使うことは考えられにくいのでデフォルトのまま
-    override val uiEffect: SharedFlow<UE> = stateManager.uiEffect
+    override val uiEffect: Flow<UE> = stateManager.uiEffect
 
     /**
      * 利用者の明示的な操作のdispatcher

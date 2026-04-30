@@ -1,12 +1,12 @@
 package com.ogata_k.mobile.code_lab.feature
 
 import android.util.Log
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 
 /**
@@ -28,12 +28,12 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
      */
     val uiState: StateFlow<US> = _uiState.asStateFlow()
 
-    protected val _uiEffect = MutableSharedFlow<UE>()
+    protected val _uiEffect = Channel<UE>(Channel.BUFFERED)
 
     /**
      * UI用のサイドエフェクト。一度消費したら保持しないようにSharedFlowになっている。
      */
-    val uiEffect: SharedFlow<UE> = _uiEffect.asSharedFlow()
+    val uiEffect: Flow<UE> = _uiEffect.receiveAsFlow()
 
     private val stateManagerScope = object : StateManagerScope<US, UE, M> {
         override fun getUiState(): US {
@@ -90,7 +90,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
 
     protected suspend fun emitUiEffect(effect: UE) {
         Log.v("StateManager", "emit UiEffect: $effect")
-        _uiEffect.emit(effect)
+        _uiEffect.send(effect)
     }
 
     protected fun emitMutation(mutation: M) {

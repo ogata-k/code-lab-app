@@ -44,7 +44,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
             this@BaseStateManager.emitUiEffect(effect)
         }
 
-        override fun emitMutation(mutation: M) {
+        override suspend fun emitMutation(mutation: M) {
             this@BaseStateManager.emitMutation(mutation)
         }
     }
@@ -93,7 +93,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
         _uiEffect.send(effect)
     }
 
-    protected fun emitMutation(mutation: M) {
+    protected suspend fun emitMutation(mutation: M) {
         _uiState.update { currentUiState ->
             val nextUiState = reducer.reduce(currentUiState, mutation)
             Log.v(

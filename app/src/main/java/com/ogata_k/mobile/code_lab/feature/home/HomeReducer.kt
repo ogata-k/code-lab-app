@@ -1,6 +1,6 @@
 package com.ogata_k.mobile.code_lab.feature.home
 
-import com.ogata_k.mobile.code_lab.feature.Reducer
+import com.ogata_k.mobile.code_lab.core.mvi.Reducer
 
 /**
  * Home の現在の状態とミューテーションから新しい状態を生成するクラス

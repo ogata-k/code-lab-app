@@ -1,7 +1,7 @@
 package com.ogata_k.mobile.code_lab.feature.home
 
-import com.ogata_k.mobile.code_lab.feature.ActionProcessor
-import com.ogata_k.mobile.code_lab.feature.StateManagerScope
+import com.ogata_k.mobile.code_lab.core.mvi.ActionProcessor
+import com.ogata_k.mobile.code_lab.core.mvi.StateManagerScope
 import javax.inject.Inject
 
 /**

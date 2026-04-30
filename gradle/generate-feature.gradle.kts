@@ -24,7 +24,7 @@ tasks.register("generateFeature") {
             "${featureName}UiState.kt" to """
                 package $packageName
                 
-                import com.ogata_k.mobile.code_lab.feature.UiState
+                import com.ogata_k.mobile.code_lab.core.mvi.UiState
                 
                 /**
                  * $featureName のUI状態
@@ -37,7 +37,7 @@ tasks.register("generateFeature") {
             "${featureName}UiEffect.kt" to """
                 package $packageName
                 
-                import com.ogata_k.mobile.code_lab.feature.UiEffect
+                import com.ogata_k.mobile.code_lab.core.mvi.UiEffect
                 
                 /**
                  * $featureName のUI副作用（ワンショットのイベント）
@@ -48,7 +48,7 @@ tasks.register("generateFeature") {
             "${featureName}Action.kt" to """
                 package $packageName
                 
-                import com.ogata_k.mobile.code_lab.feature.Action
+                import com.ogata_k.mobile.code_lab.core.mvi.Action
                 
                 /**
                  * $featureName の内部で処理されるアクション
@@ -61,7 +61,7 @@ tasks.register("generateFeature") {
             "${featureName}Intent.kt" to """
                 package $packageName
                 
-                import com.ogata_k.mobile.code_lab.feature.Intent
+                import com.ogata_k.mobile.code_lab.core.mvi.Intent
                 
                 /**
                  * $featureName に対するユーザーの意図（操作）
@@ -72,7 +72,7 @@ tasks.register("generateFeature") {
             "${featureName}Mutation.kt" to """
                 package $packageName
                 
-                import com.ogata_k.mobile.code_lab.feature.Mutation
+                import com.ogata_k.mobile.code_lab.core.mvi.Mutation
                 
                 /**
                  * $featureName の状態を変更するための変更内容
@@ -83,8 +83,8 @@ tasks.register("generateFeature") {
             "${featureName}ActionProcessor.kt" to """
                 package $packageName
                 
-                import com.ogata_k.mobile.code_lab.feature.ActionProcessor
-                import com.ogata_k.mobile.code_lab.feature.StateManagerScope
+                import com.ogata_k.mobile.code_lab.core.mvi.ActionProcessor
+                import com.ogata_k.mobile.code_lab.core.mvi.StateManagerScope
                 import javax.inject.Inject
                 
                 /**
@@ -107,7 +107,7 @@ tasks.register("generateFeature") {
             "${featureName}Reducer.kt" to """
                 package $packageName
                 
-                import com.ogata_k.mobile.code_lab.feature.Reducer
+                import com.ogata_k.mobile.code_lab.core.mvi.Reducer
                 
                 /**
                  * $featureName の現在の状態とミューテーションから新しい状態を生成するクラス
@@ -126,7 +126,7 @@ tasks.register("generateFeature") {
             "${featureName}StateManager.kt" to """
                 package $packageName
                 
-                import com.ogata_k.mobile.code_lab.feature.BaseStateManager
+                import com.ogata_k.mobile.code_lab.core.mvi.BaseStateManager
                 
                 /**
                  * $featureName の状態管理を統括するクラス
@@ -145,7 +145,7 @@ tasks.register("generateFeature") {
             "${featureName}ViewModel.kt" to """
                 package $packageName
                 
-                import com.ogata_k.mobile.code_lab.feature.BaseViewModel
+                import com.ogata_k.mobile.code_lab.core.mvi.BaseViewModel
                 import dagger.hilt.android.lifecycle.HiltViewModel
                 import javax.inject.Inject
                 
@@ -231,9 +231,9 @@ tasks.register("generateFeature") {
             val file = targetDir.resolve(fileName)
             if (!file.exists()) {
                 file.writeText(content)
-                println("Generated: ${'$'}fileName")
+                println("Generated: $fileName")
             } else {
-                println("Skipped (already exists): ${'$'}fileName")
+                println("Skipped (already exists): $fileName")
             }
         }
     }

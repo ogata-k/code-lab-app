@@ -1,6 +1,7 @@
-package com.ogata_k.mobile.code_lab.feature
+package com.ogata_k.mobile.code_lab.core.mvi
 
 import com.ogata_k.mobile.code_lab.common.logV
+import com.ogata_k.mobile.code_lab.core.mvi.middleware.MviMiddlewareDefaults
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,10 +18,15 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     private val actionProcessor: ActionProcessor<US, UE, A, M>,
     // ここでReducerを渡すことでreducer自体はSとMからしか計算できない純粋関数みたいなものであることを保証する
     private val reducer: Reducer<US, M>,
-    // @todo ミドルウェアのデフォルトリストをどこかにまとめておいて追加しやすい形にしておく
-    private val intentMiddlewares: List<IntentMiddleware<US, I, A>> = emptyList(),
-    private val actionMiddlewares: List<ActionMiddleware<US, A>> = emptyList(),
+    additionalIntentMiddlewares: List<IntentMiddleware<US, I, A>> = emptyList(),
+    additionalActionMiddlewares: List<ActionMiddleware<US, A>> = emptyList(),
 ) {
+    private val intentMiddlewares: List<IntentMiddleware<US, I, A>> =
+        MviMiddlewareDefaults.defaultIntentMiddlewares<US, I, A>() + additionalIntentMiddlewares
+
+    private val actionMiddlewares: List<ActionMiddleware<US, A>> =
+        MviMiddlewareDefaults.defaultActionMiddlewares<US, A>() + additionalActionMiddlewares
+
     protected val _uiState = MutableStateFlow<US>(initialState)
 
     /**
@@ -28,7 +34,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
      */
     val uiState: StateFlow<US> = _uiState.asStateFlow()
 
-    protected val _uiEffect = Channel<UE>(Channel.BUFFERED)
+    protected val _uiEffect = Channel<UE>(Channel.Factory.BUFFERED)
 
     /**
      * UI用のサイドエフェクト。SharedFlowもいいがナビゲーションにも使うので二重発火をさけるためにもChannelにしている。

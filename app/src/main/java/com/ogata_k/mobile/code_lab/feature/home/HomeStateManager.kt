@@ -1,6 +1,6 @@
 package com.ogata_k.mobile.code_lab.feature.home
 
-import com.ogata_k.mobile.code_lab.feature.BaseStateManager
+import com.ogata_k.mobile.code_lab.core.mvi.BaseStateManager
 
 /**
  * Home の状態管理を統括するクラス

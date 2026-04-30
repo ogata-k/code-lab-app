@@ -1,6 +1,6 @@
 package com.ogata_k.mobile.code_lab.feature.home
 
-import com.ogata_k.mobile.code_lab.feature.BaseViewModel
+import com.ogata_k.mobile.code_lab.core.mvi.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 

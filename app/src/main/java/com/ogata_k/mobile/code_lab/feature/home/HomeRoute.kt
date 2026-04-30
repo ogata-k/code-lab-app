@@ -10,7 +10,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 
 /**
- * Home のナビゲーションルートとなるComposable関数
+ * HomeのナビゲーションルートとなるComposable関数
  */
 @Composable
 fun HomeRoute(

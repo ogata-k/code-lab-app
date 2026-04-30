@@ -27,7 +27,7 @@ tasks.register("generateFeature") {
                 import com.ogata_k.mobile.code_lab.core.mvi.UiState
                 
                 /**
-                 * $featureName のUI状態
+                 * ${featureName}のUI状態
                  */
                 sealed interface ${featureName}UiState : UiState {
                     data object UnInitialized : ${featureName}UiState
@@ -40,7 +40,7 @@ tasks.register("generateFeature") {
                 import com.ogata_k.mobile.code_lab.core.mvi.UiEffect
                 
                 /**
-                 * $featureName のUI副作用（ワンショットのイベント）
+                 * ${featureName}のUI副作用（ワンショットのイベント）
                  */
                 sealed interface ${featureName}UiEffect : UiEffect
             """.trimIndent(),
@@ -51,7 +51,7 @@ tasks.register("generateFeature") {
                 import com.ogata_k.mobile.code_lab.core.mvi.Action
                 
                 /**
-                 * $featureName の内部で処理されるアクション
+                 * ${featureName}の内部で処理されるアクション
                  */
                 sealed interface ${featureName}Action : Action {
                     data object Initialize : ${featureName}Action
@@ -64,7 +64,7 @@ tasks.register("generateFeature") {
                 import com.ogata_k.mobile.code_lab.core.mvi.Intent
                 
                 /**
-                 * $featureName に対するユーザーの意図（操作）
+                 * ${featureName}に対するユーザーの意図（操作）
                  */
                 sealed interface ${featureName}Intent : Intent<${featureName}Action>
             """.trimIndent(),
@@ -75,7 +75,7 @@ tasks.register("generateFeature") {
                 import com.ogata_k.mobile.code_lab.core.mvi.Mutation
                 
                 /**
-                 * $featureName の状態を変更するための変更内容
+                 * ${featureName}の状態を変更するための変更内容
                  */
                 sealed interface ${featureName}Mutation : Mutation
             """.trimIndent(),
@@ -88,7 +88,7 @@ tasks.register("generateFeature") {
                 import javax.inject.Inject
                 
                 /**
-                 * $featureName のアクションを処理し、ミューテーションを生成するクラス
+                 * ${featureName}のアクションを処理し、ミューテーションを生成するクラス
                  */
                 class ${featureName}ActionProcessor @Inject constructor() : ActionProcessor<${featureName}UiState, ${featureName}UiEffect, ${featureName}Action, ${featureName}Mutation> {
                     override suspend fun process(
@@ -110,7 +110,7 @@ tasks.register("generateFeature") {
                 import com.ogata_k.mobile.code_lab.core.mvi.Reducer
                 
                 /**
-                 * $featureName の現在の状態とミューテーションから新しい状態を生成するクラス
+                 * ${featureName}の現在の状態とミューテーションから新しい状態を生成するクラス
                  */
                 class ${featureName}Reducer : Reducer<${featureName}UiState, ${featureName}Mutation> {
                     override fun reduce(
@@ -129,7 +129,7 @@ tasks.register("generateFeature") {
                 import com.ogata_k.mobile.code_lab.core.mvi.BaseStateManager
                 
                 /**
-                 * $featureName の状態管理を統括するクラス
+                 * ${featureName}の状態管理を統括するクラス
                  */
                 class ${featureName}StateManager(
                     initialState: ${featureName}UiState,
@@ -150,7 +150,7 @@ tasks.register("generateFeature") {
                 import javax.inject.Inject
                 
                 /**
-                 * $featureName の ViewModel
+                 * ${featureName}のViewModel
                  */
                 @HiltViewModel
                 class ${featureName}ViewModel @Inject constructor(
@@ -182,7 +182,7 @@ tasks.register("generateFeature") {
                 import androidx.lifecycle.repeatOnLifecycle
                 
                 /**
-                 * $featureName のナビゲーションルートとなるComposable関数
+                 * ${featureName}のナビゲーションルートとなるComposable関数
                  */
                 @Composable
                 fun ${featureName}Route(
@@ -214,7 +214,7 @@ tasks.register("generateFeature") {
                 import androidx.compose.ui.Modifier
                 
                 /**
-                 * $featureName のメイン画面を表示するComposable関数
+                 * ${featureName}のメイン画面を表示するComposable関数
                  */
                 @Composable
                 fun ${featureName}Screen(

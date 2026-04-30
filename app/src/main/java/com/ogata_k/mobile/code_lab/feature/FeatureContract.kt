@@ -16,7 +16,9 @@ interface UiEffect
 /**
  * ユーザー操作イベントのマーカーインターフェース
  */
-interface Intent
+interface Intent<A : Action> {
+    fun toAction(): A
+}
 
 /**
  * ユーザー操作などによって発生したアクションのマーカーインターフェース
@@ -32,7 +34,7 @@ interface Mutation
  * Intentを処理する前に実行したい処理、つまり利用者のUI操作用のミドルウェア。
  * ボタンがいつタップされたか、などアナリティクスをハンドリングするなどに使う。
  */
-interface IntentMiddleware<US : UiState, I : Intent> {
+interface IntentMiddleware<US : UiState, I : Intent<A>, A : Action> {
     /**
      * 内部でnextは最大一度だけ呼ぶことができます。
      * ２回以上呼ばれた時の挙動は保証していません。
@@ -74,7 +76,9 @@ interface ActionMiddleware<US : UiState, A : Action> {
  * StateManager内でアクションの実際の処理を提供するプロセッサーのマーカーインターフェース。
  * UseCaseをハンドリングするInteractorのようなものとなる。
  */
-interface ActionProcessor
+interface ActionProcessor<US : UiState, UE : UiEffect, A : Action, M : Mutation> {
+    suspend fun process(action: A, scope: StateManagerScope<US, UE, M>)
+}
 
 /**
  * StateManager内での処理に必要な機能をまとめたインターフェース
@@ -99,8 +103,8 @@ interface Reducer<US : UiState, M : Mutation> {
  * UIに関する状態と操作ディスパッチャーを保持するクラス用のインターフェース。
  * 大抵はViewModelがこのインターフェースの実装を担当する。
  */
-interface Store<US : UiState, UE : UiEffect, I : Intent> {
+interface Store<US : UiState, UE : UiEffect, I : Intent<A>, A : Action> {
     val uiState: StateFlow<US>
     val uiEffect: SharedFlow<UE>
-    fun dispatch(intent: I)
+    fun dispatchIntent(intent: I)
 }

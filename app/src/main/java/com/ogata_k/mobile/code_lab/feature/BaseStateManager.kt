@@ -1,41 +1,106 @@
 package com.ogata_k.mobile.code_lab.feature
 
+import android.util.Log
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+
 /**
  * Actionの処理と状態更新のパイプラインを管理する基底クラス。
  */
-abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent, A : Action, M : Mutation>(
-    private val intentMiddlewares: List<IntentMiddleware<US, I>> = emptyList(),
+abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : Action, M : Mutation>(
+    initialState: US,
+    private val actionProcessor: ActionProcessor<US, UE, A, M>,
+    // ここでReducerを渡すことでreducer自体はSとMからしか計算できない純粋関数みたいなものであることを保証する
+    private val reducer: Reducer<US, M>,
+    // @todo ミドルウェアのデフォルトリストをどこかにまとめておいて追加しやすい形にしておく
+    private val intentMiddlewares: List<IntentMiddleware<US, I, A>> = emptyList(),
     private val actionMiddlewares: List<ActionMiddleware<US, A>> = emptyList(),
-    // UseCaseなどを注入する際はここで渡すと引数が多くなったりStateManagerがFatになっていくので、ActionProcessorを別で用意してそちらで処理させる
 ) {
-    suspend fun executeIntentPipeline(intent: I, scope: StateManagerScope<US, UE, M>) {
+    protected val _uiState = MutableStateFlow<US>(initialState)
+
+    /**
+     * UI用の状態。UIはこの状態をもとに表示する。
+     */
+    val uiState: StateFlow<US> = _uiState.asStateFlow()
+
+    protected val _uiEffect = MutableSharedFlow<UE>()
+
+    /**
+     * UI用のサイドエフェクト。一度消費したら保持しないようにSharedFlowになっている。
+     */
+    val uiEffect: SharedFlow<UE> = _uiEffect.asSharedFlow()
+
+    private val stateManagerScope = object : StateManagerScope<US, UE, M> {
+        override fun getUiState(): US {
+            return _uiState.value
+        }
+
+        override suspend fun emitUiEffect(effect: UE) {
+            this@BaseStateManager.emitUiEffect(effect)
+        }
+
+        override fun emitMutation(mutation: M) {
+            this@BaseStateManager.emitMutation(mutation)
+        }
+    }
+
+    suspend fun executeIntentPipeline(intent: I) {
         // intentをactionに変換してパイプラインに流す処理をnextととして順番に利用できるようにするため、
         // initialをintent->actionとして後ろから畳み込んでnextを構築していく
-        val chain = intentMiddlewares.foldRight<IntentMiddleware<US, I>, suspend (I) -> Unit>(
+        val chain = intentMiddlewares.foldRight<IntentMiddleware<US, I, A>, suspend (I) -> Unit>(
             initial = { currentIntent ->
-                val action = mapIntentToAction(currentIntent)
-                executeActionPipeline(action, scope)
+                val action = currentIntent.toAction()
+                executeActionPipeline(action)
             }
         ) { middleware, next ->
-            { currentIntent -> middleware.handle({ -> scope.getUiState() }, currentIntent, next) }
+            { currentIntent ->
+                middleware.handle(
+                    { -> stateManagerScope.getUiState() },
+                    currentIntent,
+                    next
+                )
+            }
         }
         chain(intent)
     }
 
-    suspend fun executeActionPipeline(action: A, scope: StateManagerScope<US, UE, M>) {
-        // intentをactionに変換してパイプラインに流す処理をnextととして順番に利用できるようにするため、
-        // initialをintent->actionとして後ろから畳み込んでnextを構築していく
+    suspend fun executeActionPipeline(action: A) {
+        // actionを処理するプロセッサーに流す処理をnextととして順番に利用できるようにするため、
+        // initialをaction->(()->void)として後ろから畳み込んでnextを構築していく
         val chain = actionMiddlewares.foldRight<ActionMiddleware<US, A>, suspend (A) -> Unit>(
             initial = { currentAction ->
-                handleAction(currentAction, scope)
+                actionProcessor.process(currentAction, stateManagerScope)
             }
         ) { middleware, next ->
-            { currentAction -> middleware.handle({ -> scope.getUiState() }, currentAction, next) }
+            { currentAction ->
+                middleware.handle(
+                    { -> stateManagerScope.getUiState() },
+                    currentAction,
+                    next
+                )
+            }
         }
         chain(action)
     }
 
-    protected abstract fun mapIntentToAction(intent: I): A
-    protected abstract suspend fun handleAction(action: A, scope: StateManagerScope<US, UE, M>)
+    protected suspend fun emitUiEffect(effect: UE) {
+        Log.v("StateManager", "emit UiEffect: $effect")
+        _uiEffect.emit(effect)
+    }
 
+    protected fun emitMutation(mutation: M) {
+        _uiState.update { currentUiState ->
+            val nextUiState = reducer.reduce(currentUiState, mutation)
+            Log.v(
+                "StateManager",
+                "emit Mutation: $mutation, from UiState: $currentUiState, to UiState: $nextUiState"
+            )
+            nextUiState
+        }
+    }
 }

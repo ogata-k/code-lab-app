@@ -2,75 +2,53 @@ package com.ogata_k.mobile.code_lab.feature
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
  * featureで利用するViewModelの継承元のモデル
- * ※ Action(A) は StateManager 内部で扱われるため、ViewModel のジェネリクスからは隠蔽している
  */
-abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent, M : Mutation>(
-    initialState: US,
-    private val stateManager: BaseStateManager<US, UE, I, *, M>,
-    // ここでReducerを渡すことでreducer自体はSとMからしか計算できない純粋関数みたいなものであることを保証する
-    private val reducer: Reducer<US, M>,
-) : ViewModel(), Store<US, UE, I> {
+abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent<A>, A : Action, M : Mutation>(
+    private val stateManager: BaseStateManager<US, UE, I, A, M>,
+) : ViewModel(), Store<US, UE, I, A> {
 
-    private val _uiState = MutableStateFlow(initialState)
-
-    /**
-     * UI用の状態。UIはこの状態をもとに表示する。
-     */
-    override val uiState: StateFlow<US> = _uiState.asStateFlow()
-
-    private val _uiEffect = MutableSharedFlow<UE>()
-
-    /**
-     * UI用のサイドエフェクト。一度消費したら保持しないようにSharedFlowになっている。
-     */
-    override val uiEffect: SharedFlow<UE> = _uiEffect.asSharedFlow()
-
-    private val stateManagerScope = object : StateManagerScope<US, UE, M> {
-        override fun getUiState(): US {
-            return _uiState.value
-        }
-
-        override suspend fun emitUiEffect(effect: UE) {
-            this@BaseViewModel.emitUiEffect(effect)
-        }
-
-        override fun emitMutation(mutation: M) {
-            this@BaseViewModel.emitMutation(mutation)
-        }
+    /* initで初期データのロードを行う。Action.Initializeという初期化リクエストを発行する
+    init {
+        // 初期データのロード
+        dispatchAction(${featureName}Action.Initialize())
     }
+    */
+
+    // @todo 必要ならstateManager.actionProcessorのイベントをここで監視して、必要ならstateManager.executeActionPipelineで処理するリスナーを登録する
+
+    // uiStateは合成して作られているColdフローの可能性があるのでstateInでHotにしておく
+    override val uiState: StateFlow<US> = stateManager.uiState.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = stateManager.uiState.value,
+    )
+
+    // uiEffectはemitされたUiEffectを流すだけなので合成を使うことは考えられにくいのでデフォルトのまま
+    override val uiEffect: SharedFlow<UE> = stateManager.uiEffect
 
     /**
      * 利用者の明示的な操作のdispatcher
      */
-    override fun dispatch(intent: I) {
+    override fun dispatchIntent(intent: I) {
         viewModelScope.launch {
-            stateManager.executeIntentPipeline(
-                intent,
-                stateManagerScope,
-            )
+            stateManager.executeIntentPipeline(intent)
         }
     }
 
-    // @todo 必要ならEventBusからのイベントをもとにstateManager.executeActionPipelineで処理するリスナーを登録してもいいかも
-
-    protected suspend fun emitUiEffect(effect: UE) {
-        _uiEffect.emit(effect)
-    }
-
-    protected fun emitMutation(mutation: M) {
-        _uiState.update { currentState ->
-            reducer.reduce(currentState, mutation)
+    /**
+     * Actionのdispatcher。Storeとしては不要だが、ViewModel内で呼び出すActionを直接発火させるときに使う。
+     */
+    protected fun dispatchAction(action: A) {
+        viewModelScope.launch {
+            stateManager.executeActionPipeline(action)
         }
     }
 }

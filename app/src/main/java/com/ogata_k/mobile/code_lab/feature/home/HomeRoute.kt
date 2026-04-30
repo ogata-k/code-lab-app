@@ -1,4 +1,5 @@
 package com.ogata_k.mobile.code_lab.feature.home
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue

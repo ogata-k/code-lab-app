@@ -1,4 +1,5 @@
 package com.ogata_k.mobile.code_lab.feature.home
+
 import com.ogata_k.mobile.code_lab.feature.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -8,9 +9,13 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    stateManager: HomeStateManager
+    actionProcessor: HomeActionProcessor,
 ) : BaseViewModel<HomeUiState, HomeUiEffect, HomeIntent, HomeAction, HomeMutation>(
-    stateManager = stateManager
+    stateManager = HomeStateManager(
+        initialState = HomeUiState.UnInitialized,
+        actionProcessor = actionProcessor,
+        reducer = HomeReducer()
+    )
 ) {
     init {
         // 初期データのロード

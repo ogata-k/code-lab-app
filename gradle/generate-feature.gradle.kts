@@ -23,6 +23,7 @@ tasks.register("generateFeature") {
         val templates = mapOf(
             "${featureName}UiState.kt" to """
                 package $packageName
+                
                 import com.ogata_k.mobile.code_lab.feature.UiState
                 
                 /**
@@ -35,6 +36,7 @@ tasks.register("generateFeature") {
 
             "${featureName}UiEffect.kt" to """
                 package $packageName
+                
                 import com.ogata_k.mobile.code_lab.feature.UiEffect
                 
                 /**
@@ -45,6 +47,7 @@ tasks.register("generateFeature") {
 
             "${featureName}Action.kt" to """
                 package $packageName
+                
                 import com.ogata_k.mobile.code_lab.feature.Action
                 
                 /**
@@ -57,6 +60,7 @@ tasks.register("generateFeature") {
 
             "${featureName}Intent.kt" to """
                 package $packageName
+                
                 import com.ogata_k.mobile.code_lab.feature.Intent
                 
                 /**
@@ -67,6 +71,7 @@ tasks.register("generateFeature") {
 
             "${featureName}Mutation.kt" to """
                 package $packageName
+                
                 import com.ogata_k.mobile.code_lab.feature.Mutation
                 
                 /**
@@ -77,6 +82,7 @@ tasks.register("generateFeature") {
 
             "${featureName}ActionProcessor.kt" to """
                 package $packageName
+                
                 import com.ogata_k.mobile.code_lab.feature.ActionProcessor
                 import com.ogata_k.mobile.code_lab.feature.StateManagerScope
                 import javax.inject.Inject
@@ -100,6 +106,7 @@ tasks.register("generateFeature") {
 
             "${featureName}Reducer.kt" to """
                 package $packageName
+                
                 import com.ogata_k.mobile.code_lab.feature.Reducer
                 
                 /**
@@ -118,17 +125,18 @@ tasks.register("generateFeature") {
 
             "${featureName}StateManager.kt" to """
                 package $packageName
+                
                 import com.ogata_k.mobile.code_lab.feature.BaseStateManager
-                import javax.inject.Inject
                 
                 /**
                  * $featureName の状態管理を統括するクラス
                  */
-                class ${featureName}StateManager @Inject constructor(
+                class ${featureName}StateManager(
+                    initialState: ${featureName}UiState,
                     actionProcessor: ${featureName}ActionProcessor,
                     reducer: ${featureName}Reducer
                 ) : BaseStateManager<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>(
-                    initialState = ${featureName}UiState.UnInitialized,
+                    initialState = initialState,
                     actionProcessor = actionProcessor,
                     reducer = reducer
                 )
@@ -136,6 +144,7 @@ tasks.register("generateFeature") {
 
             "${featureName}ViewModel.kt" to """
                 package $packageName
+                
                 import com.ogata_k.mobile.code_lab.feature.BaseViewModel
                 import dagger.hilt.android.lifecycle.HiltViewModel
                 import javax.inject.Inject
@@ -145,9 +154,13 @@ tasks.register("generateFeature") {
                  */
                 @HiltViewModel
                 class ${featureName}ViewModel @Inject constructor(
-                    stateManager: ${featureName}StateManager
+                    actionProcessor: ${featureName}ActionProcessor,
                 ) : BaseViewModel<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>(
-                    stateManager = stateManager
+                    stateManager = ${featureName}StateManager(
+                        initialState = ${featureName}UiState.UnInitialized,
+                        actionProcessor = actionProcessor,
+                        reducer = ${featureName}Reducer()
+                    )
                 ) {
                     init {
                         // 初期データのロード
@@ -158,6 +171,7 @@ tasks.register("generateFeature") {
 
             "${featureName}Route.kt" to """
                 package $packageName
+                
                 import androidx.compose.runtime.Composable
                 import androidx.compose.runtime.LaunchedEffect
                 import androidx.compose.runtime.getValue
@@ -195,6 +209,7 @@ tasks.register("generateFeature") {
 
             "${featureName}Screen.kt" to """
                 package $packageName
+                
                 import androidx.compose.runtime.Composable
                 import androidx.compose.ui.Modifier
                 

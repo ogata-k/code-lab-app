@@ -24,8 +24,47 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     private val intentMiddlewares: List<IntentMiddleware<US, I, A>> =
         MviMiddlewareDefaults.defaultIntentMiddlewares<US, I, A>() + additionalIntentMiddlewares
 
+    private val intentChain: suspend (I) -> Unit =
+        intentMiddlewares.foldRight<IntentMiddleware<US, I, A>, suspend (I) -> Unit>(
+            // intentをactionに変換してパイプラインに流す処理をnextととして順番に利用できるようにするため、
+            // initialをintent->actionとして後ろから畳み込んでnextを構築していく
+            initial = { currentIntent ->
+                val action = currentIntent.toAction()
+                executeActionPipeline(action)
+            }
+        ) { middleware, next ->
+            { currentIntent ->
+                middleware.handle(
+                    { -> stateManagerScope.getUiState() },
+                    currentIntent,
+                    next
+                )
+            }
+        }
+
+    suspend fun executeIntentPipeline(intent: I) = intentChain(intent)
+
     private val actionMiddlewares: List<ActionMiddleware<US, A>> =
         MviMiddlewareDefaults.defaultActionMiddlewares<US, A>() + additionalActionMiddlewares
+
+    private val actionChain: suspend (A) -> Unit =
+        actionMiddlewares.foldRight<ActionMiddleware<US, A>, suspend (A) -> Unit>(
+            // actionを処理するプロセッサーに流す処理をnextととして順番に利用できるようにするため、
+            // initialをaction->(()->void)として後ろから畳み込んでnextを構築していく
+            initial = { currentAction ->
+                actionProcessor.process(currentAction, stateManagerScope)
+            }
+        ) { middleware, next ->
+            { currentAction ->
+                middleware.handle(
+                    { -> stateManagerScope.getUiState() },
+                    currentAction,
+                    next
+                )
+            }
+        }
+
+    suspend fun executeActionPipeline(action: A) = actionChain(action)
 
     protected val _uiState = MutableStateFlow<US>(initialState)
 
@@ -53,45 +92,6 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
         override suspend fun emitMutation(mutation: M) {
             this@BaseStateManager.emitMutation(mutation)
         }
-    }
-
-    suspend fun executeIntentPipeline(intent: I) {
-        // intentをactionに変換してパイプラインに流す処理をnextととして順番に利用できるようにするため、
-        // initialをintent->actionとして後ろから畳み込んでnextを構築していく
-        val chain = intentMiddlewares.foldRight<IntentMiddleware<US, I, A>, suspend (I) -> Unit>(
-            initial = { currentIntent ->
-                val action = currentIntent.toAction()
-                executeActionPipeline(action)
-            }
-        ) { middleware, next ->
-            { currentIntent ->
-                middleware.handle(
-                    { -> stateManagerScope.getUiState() },
-                    currentIntent,
-                    next
-                )
-            }
-        }
-        chain(intent)
-    }
-
-    suspend fun executeActionPipeline(action: A) {
-        // actionを処理するプロセッサーに流す処理をnextととして順番に利用できるようにするため、
-        // initialをaction->(()->void)として後ろから畳み込んでnextを構築していく
-        val chain = actionMiddlewares.foldRight<ActionMiddleware<US, A>, suspend (A) -> Unit>(
-            initial = { currentAction ->
-                actionProcessor.process(currentAction, stateManagerScope)
-            }
-        ) { middleware, next ->
-            { currentAction ->
-                middleware.handle(
-                    { -> stateManagerScope.getUiState() },
-                    currentAction,
-                    next
-                )
-            }
-        }
-        chain(action)
     }
 
     protected suspend fun emitUiEffect(effect: UE) {

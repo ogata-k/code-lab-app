@@ -1,24 +1,29 @@
 package com.ogata_k.mobile.code_lab.core.mvi
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 /**
  * featureで利用するViewModelの継承元のモデル
  */
 abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent<A>, A : Action, M : Mutation>(
-    private val stateManager: BaseStateManager<US, UE, I, A, M>,
+    protected val stateManager: BaseStateManager<US, UE, I, A, M>,
 ) : ViewModel(), Store<US, UE, I, A> {
 
     /* initで初期データのロードを行う。Action.Initializeという初期化リクエストを発行する
     init {
+        // 各種状態管理用パイプラインの構築
+        stateManager.startPipeline()
         // 初期データのロード
         dispatchAction(${featureName}Action.Initialize())
     }
     */
+
+    override fun onCleared() {
+        super.onCleared()
+        stateManager.onCleared()
+    }
 
     // @todo 必要ならstateManager.actionProcessorのイベントをここで監視して、必要ならstateManager.executeActionPipelineで処理するリスナーを登録する
 
@@ -31,17 +36,13 @@ abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent<A>, A : Act
      * 利用者の明示的な操作のdispatcher
      */
     override fun dispatchIntent(intent: I) {
-        viewModelScope.launch {
-            stateManager.executeIntentPipeline(intent)
-        }
+        stateManager.dispatchIntent(intent)
     }
 
     /**
      * Actionのdispatcher。Storeとしては不要だが、ViewModel内で呼び出すActionを直接発火させるときに使う。
      */
     protected fun dispatchAction(action: A) {
-        viewModelScope.launch {
-            stateManager.executeActionPipeline(action)
-        }
+        stateManager.dispatchAction(action)
     }
 }

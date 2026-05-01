@@ -9,7 +9,7 @@ import com.ogata_k.mobile.code_lab.core.mvi.UiState
  * アクションの実行時間を計測してログ出力するミドルウェア
  */
 class PerformanceActionMiddleware<US : UiState, A : Action> : ActionMiddleware<US, A> {
-    override suspend fun handle(
+    override suspend fun handleAction(
         getUiState: () -> US,
         action: A,
         next: suspend (A) -> Unit

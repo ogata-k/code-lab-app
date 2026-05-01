@@ -9,7 +9,7 @@ import com.ogata_k.mobile.code_lab.core.mvi.UiState
  * すべてのアクションをログ出力するミドルウェア
  */
 class LoggingActionMiddleware<US : UiState, A : Action> : ActionMiddleware<US, A> {
-    override suspend fun handle(
+    override suspend fun handleAction(
         getUiState: () -> US,
         action: A,
         next: suspend (A) -> Unit

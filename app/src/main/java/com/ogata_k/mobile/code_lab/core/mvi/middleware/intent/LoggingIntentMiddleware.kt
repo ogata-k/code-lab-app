@@ -11,7 +11,7 @@ import com.ogata_k.mobile.code_lab.core.mvi.UiState
  */
 class LoggingIntentMiddleware<US : UiState, I : Intent<A>, A : Action> :
     IntentMiddleware<US, I, A> {
-    override suspend fun handle(
+    override suspend fun handleIntent(
         getUiState: () -> US,
         intent: I,
         next: suspend (I) -> Unit

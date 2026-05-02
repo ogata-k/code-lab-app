@@ -2,6 +2,7 @@ package com.ogata_k.mobile.code_lab.feature.home
 
 import com.ogata_k.mobile.code_lab.core.mvi.ActionProcessor
 import com.ogata_k.mobile.code_lab.core.mvi.StateManagerScope
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 
 /**
@@ -15,7 +16,9 @@ class HomeActionProcessor @Inject constructor() :
     ) {
         when (action) {
             is HomeAction.Initialize -> {
-                // TODO: 初期化処理
+                delay(1000)
+                scope.emitMutation(HomeMutation.ToInitialized)
+                scope.emitUiEffect(HomeUiEffect.ShowInitializedSnackbar)
             }
         }
     }

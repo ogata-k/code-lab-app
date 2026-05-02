@@ -7,4 +7,5 @@ import com.ogata_k.mobile.code_lab.core.mvi.UiState
  */
 sealed interface HomeUiState : UiState {
     data object UnInitialized : HomeUiState
+    data object Initialized : HomeUiState
 }

@@ -30,7 +30,9 @@ tasks.register("generateFeature") {
                  * ${featureName} featureのUI状態
                  */
                 sealed interface ${featureName}UiState : UiState {
+                    // TODO: 本来のUiStateに書き換える
                     data object UnInitialized : ${featureName}UiState
+                    data object Initialized : ${featureName}UiState
                 }
             """.trimIndent(),
 
@@ -55,6 +57,7 @@ tasks.register("generateFeature") {
                  * ${featureName} featureの内部で処理されるアクション
                  */
                 sealed interface ${featureName}Action : Action {
+                    // TODO: 本来のActionに書き換える
                     data object Initialize : ${featureName}Action {
                         override val strategy: ExecutionStrategy = ExecutionStrategy.Parallel
                     }
@@ -85,7 +88,10 @@ tasks.register("generateFeature") {
                 /**
                  * ${featureName} featureの状態を変更するための変更内容
                  */
-                sealed interface ${featureName}Mutation : Mutation
+                sealed interface ${featureName}Mutation : Mutation{
+                    // TODO: 本来のMutationに書き換える
+                    data object ToInitialized : ${featureName}Mutation
+                }
             """.trimIndent(),
 
             "${featureName}ActionProcessor.kt" to """
@@ -105,7 +111,8 @@ tasks.register("generateFeature") {
                     ) {
                         when (action) {
                             is ${featureName}Action.Initialize -> {
-                                // TODO: 初期化処理
+                                // TODO: 実際の初期化処理
+                                scope.emitMutation(${featureName}Mutation.ToInitialized)
                             }
                         }
                     }
@@ -126,7 +133,9 @@ tasks.register("generateFeature") {
                         mutation: ${featureName}Mutation
                     ): ${featureName}UiState {
                         // TODO: 実際の変換処理
-                        return currentState
+                        return when(mutation){
+                            ${featureName}Mutation.ToInitialized -> ${featureName}UiState.Initialized
+                        }
                     }
                 }
             """.trimIndent(),
@@ -223,8 +232,16 @@ tasks.register("generateFeature") {
             "${featureName}Screen.kt" to """
                 package $packageName
                 
+                import androidx.compose.foundation.layout.fillMaxSize
+                import androidx.compose.foundation.layout.padding
+                import androidx.compose.material3.Scaffold
+                import androidx.compose.material3.Text
                 import androidx.compose.runtime.Composable
                 import androidx.compose.ui.Modifier
+                import androidx.compose.ui.res.stringResource
+                import androidx.compose.ui.tooling.preview.Preview
+                import com.ogata_k.mobile.code_lab.R
+                import com.ogata_k.mobile.code_lab.ui.theme.CodeLabTheme
                 
                 /**
                  * ${featureName} featureのメイン画面を表示するComposable関数
@@ -235,7 +252,30 @@ tasks.register("generateFeature") {
                     onIntent: (${featureName}Intent) -> Unit,
                     modifier: Modifier = Modifier
                 ) {
-                    // UI Implementation
+                    // TODO 実際のUI実装
+                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                        Greeting(
+                            name = uiState.toString(),
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
+                }
+                
+                @Composable
+                fun Greeting(name: String, modifier: Modifier = Modifier) {
+                    val appName: String = stringResource(R.string.app_name)
+                    Text(
+                        text = "Hello ${'$'}name for ${'$'}appName!",
+                        modifier = modifier
+                    )
+                }
+
+                @Preview(showBackground = true)
+                @Composable
+                fun GreetingPreview() {
+                    CodeLabTheme {
+                        Greeting("Android")
+                    }
                 }
             """.trimIndent()
         )

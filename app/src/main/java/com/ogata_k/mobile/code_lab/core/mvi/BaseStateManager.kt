@@ -64,10 +64,10 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
                 }
             }
         ) { middleware, next ->
-            { currentIntent ->
+            { intent ->
                 middleware.process(
                     { stateManagerScope.getUiStateSnapshot() },
-                    currentIntent,
+                    intent,
                     next
                 )
             }
@@ -119,10 +119,10 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
                 actionProcessor.process(currentAction, scope)
             }
         ) { middleware, next ->
-            { currentAction, scope ->
+            { action, scope ->
                 middleware.process(
                     { scope.getUiStateSnapshot() },
-                    currentAction,
+                    action,
                     { nextAction -> next(nextAction, scope) }
                 )
             }

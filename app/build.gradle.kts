@@ -58,6 +58,9 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -81,6 +84,9 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.hilt.android.testing)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.mockk)
     kspTest(libs.hilt.compiler)
 
     androidTestImplementation(libs.androidx.junit)

@@ -25,10 +25,10 @@ abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent<A>, A : Act
 
     // @todo 必要ならstateManager.actionProcessorのイベントをここで監視して、必要ならstateManager.executeActionPipelineで処理するリスナーを登録する
 
-    override val uiState: StateFlow<US> = stateManager.uiState
+    override val uiState: StateFlow<US> get() = stateManager.uiState
 
     // uiEffectはemitされたUiEffectを流すだけなので合成を使うことは考えられにくいのでデフォルトのまま
-    override val uiEffect: Flow<UE> = stateManager.uiEffect
+    override val uiEffect: Flow<UE> get() = stateManager.uiEffect
 
     /**
      * 利用者の明示的な操作のdispatcher

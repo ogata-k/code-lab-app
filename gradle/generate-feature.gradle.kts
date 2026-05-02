@@ -15,9 +15,14 @@ tasks.register("generateFeature") {
 
         val packageName = "com.ogata_k.mobile.code_lab.feature.$packageLabel"
         val targetDir = file("app/src/main/java/com/ogata_k/mobile/code_lab/feature/$packageLabel")
+        val testTargetDir =
+            file("app/src/test/java/com/ogata_k/mobile/code_lab/feature/$packageLabel")
 
         if (!targetDir.exists()) {
             targetDir.mkdirs()
+        }
+        if (!testTargetDir.exists()) {
+            testTargetDir.mkdirs()
         }
 
         val templates = mapOf(
@@ -284,9 +289,97 @@ tasks.register("generateFeature") {
             val file = targetDir.resolve(fileName)
             if (!file.exists()) {
                 file.writeText(content)
-                println("Generated: $fileName")
+                println("Generated template: $fileName")
             } else {
-                println("Skipped (already exists): $fileName")
+                println("Skipped template (already exists): $fileName")
+            }
+        }
+
+
+        val testTemplates = mapOf(
+            "${featureName}ViewModelTest.kt" to """
+                package $packageName
+                
+                import kotlinx.coroutines.Dispatchers
+                import kotlinx.coroutines.ExperimentalCoroutinesApi
+                import kotlinx.coroutines.test.StandardTestDispatcher
+                import kotlinx.coroutines.test.advanceUntilIdle
+                import kotlinx.coroutines.test.resetMain
+                import kotlinx.coroutines.test.runTest
+                import kotlinx.coroutines.test.setMain
+                import org.junit.After
+                import org.junit.Assert.assertEquals
+                import org.junit.Before
+                import org.junit.Test
+                
+                /**
+                 * ${featureName}ViewModelのテスト
+                 */
+                @OptIn(ExperimentalCoroutinesApi::class)
+                class ${featureName}ViewModelTest {
+                    private val testDispatcher = StandardTestDispatcher()
+
+                    @Before
+                    fun setup() {
+                        Dispatchers.setMain(testDispatcher)
+                    }
+
+                    @After
+                    fun tearDown() {
+                        Dispatchers.resetMain()
+                    }
+                    
+                    @Test
+                    fun `初期化時にInitialized状態になること`() = runTest {
+                        val actionProcessor = ${featureName}ActionProcessor()
+                        // viewModel uses viewModelScope, which uses Dispatchers.Main (set to testDispatcher above)
+                        val viewModel = ${featureName}ViewModel(actionProcessor)
+
+                        // 初期状態がUnInitializedであることを確認
+                        assertEquals(${featureName}UiState.UnInitialized, viewModel.uiState.value)
+
+                        // Initializeアクションが完了するまで待機
+                        advanceUntilIdle()
+
+                        // viewModel.init内でInitializeアクションが呼ばれる想定
+                        assertEquals(${featureName}UiState.Initialized, viewModel.uiState.value)
+                    }
+                }
+            """.trimIndent(),
+
+            "${featureName}ReducerTest.kt" to """
+                package $packageName
+                
+                import org.junit.Assert.assertEquals
+                import org.junit.Test
+                
+                /**
+                 * ${featureName}Reducerのテスト
+                 */
+                class ${featureName}ReducerTest {
+                
+                    private val reducer = ${featureName}Reducer()
+                
+                    @Test
+                    fun `ToInitializedミューテーションによりInitialized状態に遷移すること`() {
+                        val initialState = ${featureName}UiState.UnInitialized
+                        val mutation = ${featureName}Mutation.ToInitialized
+                        
+                        val newState = reducer.reduce(initialState, mutation)
+                        
+                        assertEquals(${featureName}UiState.Initialized, newState)
+                    }
+                }
+            """.trimIndent()
+        )
+
+        testTemplates.forEach { (fileName, content) ->
+            val file = testTargetDir.resolve(fileName)
+            if (!file.exists()) {
+                file.writeText(content)
+                println("Generated test template: $fileName")
+            } else {
+                println("Skipped test template (already exists): $fileName")
             }
         }
     }

@@ -28,26 +28,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     additionalIntentMiddlewares: List<IntentMiddleware<US, I, A>> = emptyList(),
     additionalActionMiddlewares: List<ActionMiddleware<US, A>> = emptyList(),
 ) {
-    /**
-     * 後かたずけ処理
-     */
-    fun onCleared() {
-        // ① Channel閉じる
-        intentChannel.close()
-        actionChannel.close()
-        sequentialChannels.values.forEach { it.close() }
-
-        // ② Jobキャンセル
-        intentLoopJob?.cancel()
-        actionLoopJob?.cancel()
-        sequentialWorkers.values.forEach { it.cancel() }
-        latestActionJobs.values.forEach { it.cancel() }
-
-        // ③ Mapクリア
-        sequentialChannels.clear()
-        sequentialWorkers.clear()
-        latestActionJobs.clear()
-    }
+    // --- UI State & Effects ---
 
     protected val _uiState = MutableStateFlow<US>(initialState)
 
@@ -64,15 +45,9 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
      */
     val uiEffect: Flow<UE> = _uiEffect.receiveAsFlow()
 
-    /**
-     * すべてのIntentはここを通る。
-     */
-    private val intentChannel =
-        Channel<I>(capacity = Channel.BUFFERED)
+    // --- Intent Pipeline ---
 
-    /**
-     * dispatchされたIntentの消費Job
-     */
+    protected val intentChannel = Channel<I>(capacity = Channel.BUFFERED)
     private var intentLoopJob: Job? = null
 
     private val intentMiddlewares: List<IntentMiddleware<US, I, A>> =
@@ -91,22 +66,55 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
         ) { middleware, next ->
             { currentIntent ->
                 middleware.process(
-                    { -> stateManagerScope.getUiStateSnapshot() },
+                    { stateManagerScope.getUiStateSnapshot() },
                     currentIntent,
                     next
                 )
             }
         }
 
+    /**
+     * Intentの入口。Channel経由で順次処理される。
+     */
+    fun dispatchIntent(intent: I) {
+        if (intentLoopJob == null) {
+            intentLoopJob = scope.launch {
+                for (target in intentChannel) {
+                    executeIntentPipeline(target)
+                }
+            }
+        }
+
+        val result = intentChannel.trySend(intent)
+        if (result.isFailure) {
+            logE("IntentChannel") { "Failed to dispatch intent: $intent" }
+        }
+    }
+
     private suspend fun executeIntentPipeline(intent: I) = intentChain(intent)
+
+    // --- Action Pipeline ---
+
+    protected val actionChannel = Channel<A>(capacity = Channel.BUFFERED)
+
+    private var actionLoopJob: Job? = null
+
+    /**
+     * Actionの最新のみ結果を残す処理用のJob管理
+     */
+    private val latestActionJobs = ConcurrentHashMap<ExecutionKey, Job>()
+
+    /**
+     * Sequential Actionをキューイングするための専用Channel。
+     */
+    private val sequentialChannels = ConcurrentHashMap<ExecutionKey, Channel<A>>()
+    private val sequentialWorkers = ConcurrentHashMap<ExecutionKey, Job>()
 
     private val actionMiddlewares: List<ActionMiddleware<US, A>> =
         MviMiddlewareDefaults.defaultActionMiddlewares<US, A>() + additionalActionMiddlewares
 
     private val actionChain: suspend (A, StateManagerScope<US, UE, M>) -> Unit =
         actionMiddlewares.foldRight<ActionMiddleware<US, A>, suspend (A, StateManagerScope<US, UE, M>) -> Unit>(
-            // actionを処理するプロセッサーに流す処理をnextととして順番に利用できるようにするため、
-            // initialをaction->(()->void)として後ろから畳み込んでnextを構築していく
             initial = { currentAction, scope ->
                 actionProcessor.process(currentAction, scope)
             }
@@ -120,185 +128,22 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
             }
         }
 
-    private suspend fun executeActionPipeline(
-        action: A,
-        stateManagerScope: StateManagerScope<US, UE, M> = this.stateManagerScope
-    ) = actionChain(action, stateManagerScope)
-
     /**
-     * すべてのActionはここを通る。
-     */
-    protected val actionChannel =
-        Channel<A>(capacity = Channel.BUFFERED)
-
-    /**
-     * dispatchされたActionの消費Job
-     */
-    private var actionLoopJob: Job? = null
-
-    /**
-     * Actionの最新のみ結果を残す処理用のJob管理
-     */
-    protected val latestActionJobs = ConcurrentHashMap<ExecutionKey, Job>()
-
-    /**
-     * Sequential Actionをキューイングするための専用Channel。
-     * 送信側をブロックせずに順次キューに追加するために利用。
-     */
-    private val sequentialChannels =
-        ConcurrentHashMap<ExecutionKey, Channel<A>>()
-
-    private val sequentialWorkers =
-        ConcurrentHashMap<ExecutionKey, Job>()
-
-    /**
-     * Actionの戦略に応じて実行方法を切り替える
-     */
-    private suspend fun executeActionWithStrategy(action: A) {
-        when (val strategy = action.strategy) {
-            /**
-             * 並列実行
-             */
-            ExecutionStrategy.Parallel -> {
-                scope.launch {
-                    try {
-                        executeActionPipeline(action)
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Throwable) {
-                        logE("ActionPipeline", e) { "Occurred Unexpected Exception" }
-                    }
-                }
-            }
-
-            /**
-             * 直列実行
-             */
-            is ExecutionStrategy.Sequential -> {
-                val key = strategy.key
-                val channel = sequentialChannels.getOrPut(key) {
-                    Channel(Channel.BUFFERED)
-                }
-
-                // ワーカーを未登録なら登録
-                sequentialWorkers.getOrPut(key) {
-                    scope.launch {
-                        for (action in channel) {
-                            try {
-                                executeActionPipeline(action)
-                            } catch (e: CancellationException) {
-                                throw e
-                            } catch (e: Throwable) {
-                                logE("ActionPipeline", e) { "Occurred Unexpected Exception" }
-                            }
-                        }
-                    }
-                }
-
-                channel.send(action)
-            }
-
-            /**
-             * 最新のみ有効
-             */
-            is ExecutionStrategy.LatestOnly -> {
-                // 同じkeyの前回処理をキャンセル
-                latestActionJobs[strategy.key]?.cancel()
-
-                val job = scope.launch {
-                    try {
-                        executeActionPipeline(
-                            action,
-                            stateManagerScope = object : StateManagerScope<US, UE, M> {
-                                override fun getUiStateSnapshot(): US =
-                                    stateManagerScope.getUiStateSnapshot()
-
-                                override suspend fun emitUiEffect(effect: UE) {
-                                    // 古いほうがキャンセルされた場合は停止してほしいので無理やりにでもキャンセル処理させる
-                                    stateManagerScope.ensureActive()
-                                    stateManagerScope.emitUiEffect(effect)
-                                }
-
-                                override suspend fun emitMutation(mutation: M) {
-                                    // 古いほうがキャンセルされた場合は停止してほしいので無理やりにでもキャンセル処理させる
-                                    stateManagerScope.ensureActive()
-                                    stateManagerScope.emitMutation(mutation)
-                                }
-                            }
-                        )
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Throwable) {
-                        logE("ActionPipeline", e) { "Occurred Unexpected Exception" }
-                    }
-                }
-
-                latestActionJobs[strategy.key] = job
-
-                // 完了時にMapから削除（リーク防止）
-                job.invokeOnCompletion {
-                    if (latestActionJobs[strategy.key] == job) {
-                        latestActionJobs.remove(strategy.key)
-                    }
-                }
-            }
-        }
-    }
-
-    protected val stateManagerScope = object : StateManagerScope<US, UE, M> {
-        override fun getUiStateSnapshot(): US {
-            return _uiState.value
-        }
-
-        override suspend fun emitUiEffect(effect: UE) {
-            this@BaseStateManager.emitUiEffect(effect)
-        }
-
-        override suspend fun emitMutation(mutation: M) {
-            this@BaseStateManager.emitMutation(mutation)
-        }
-    }
-
-    /**
-     * Intentの入口
-     *
-     * Channel経由で順次処理される
-     */
-    fun dispatchIntent(intent: I) {
-        // Intentの単一消費用のリスナーの登録がまだなら登録
-        if (intentLoopJob == null) {
-            intentLoopJob = scope.launch {
-                for (intent in intentChannel) {
-                    executeIntentPipeline(intent)
-                }
-            }
-        }
-
-        val result = intentChannel.trySend(intent)
-        if (result.isFailure) {
-            logE("IntentChannel") { "Failed to dispatch intent: $intent" }
-        }
-    }
-
-    /**
-     * Actionの唯一の入口
+     * Actionの唯一の入口。
      */
     fun dispatchAction(action: A) {
-        // Actionの単一消費用のリスナーの登録がまだなら登録
         if (actionLoopJob == null) {
             actionLoopJob = scope.launch {
-                for (action in actionChannel) {
+                for (target in actionChannel) {
                     try {
-                        executeActionWithStrategy(action)
+                        executeActionWithStrategy(target)
                     } catch (e: CancellationException) {
-                        // コルーチンのキャンセルは再スローしてループを正しく終了させる
                         throw e
                     } catch (e: Throwable) {
-                        // ここでキャッチすることで、メインループは生き残り続ける
                         logE(
                             "ActionChannel",
                             e
-                        ) { "Critical error in action loop for action: $action" }
+                        ) { "Critical error in action loop for action: $target" }
                     }
                 }
             }
@@ -310,6 +155,82 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
         }
     }
 
+    private suspend fun executeActionPipeline(
+        action: A,
+        stateManagerScope: StateManagerScope<US, UE, M> = this.stateManagerScope
+    ) = actionChain(action, stateManagerScope)
+
+    /**
+     * Actionの戦略に応じて実行方法を切り替える
+     */
+    private suspend fun executeActionWithStrategy(action: A) {
+        when (val strategy = action.strategy) {
+            ExecutionStrategy.Parallel -> {
+                scope.launch {
+                    runCatchActionPipeline { executeActionPipeline(action) }
+                }
+            }
+
+            is ExecutionStrategy.Sequential -> {
+                val key = strategy.key
+                val channel = sequentialChannels.getOrPut(key) {
+                    Channel(Channel.BUFFERED)
+                }
+
+                sequentialWorkers.getOrPut(key) {
+                    scope.launch {
+                        for (queuedAction in channel) {
+                            runCatchActionPipeline { executeActionPipeline(queuedAction) }
+                        }
+                    }
+                }
+
+                channel.send(action)
+            }
+
+            is ExecutionStrategy.LatestOnly -> {
+                latestActionJobs[strategy.key]?.cancel()
+
+                val job = scope.launch {
+                    val wrappedScope = object : StateManagerScope<US, UE, M> {
+                        override fun getUiStateSnapshot(): US =
+                            stateManagerScope.getUiStateSnapshot()
+
+                        override suspend fun emitUiEffect(effect: UE) {
+                            stateManagerScope.ensureActive()
+                            stateManagerScope.emitUiEffect(effect)
+                        }
+
+                        override suspend fun emitMutation(mutation: M) {
+                            stateManagerScope.ensureActive()
+                            stateManagerScope.emitMutation(mutation)
+                        }
+                    }
+                    runCatchActionPipeline { executeActionPipeline(action, wrappedScope) }
+                }
+
+                latestActionJobs[strategy.key] = job
+                job.invokeOnCompletion {
+                    if (latestActionJobs[strategy.key] == job) {
+                        latestActionJobs.remove(strategy.key)
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend inline fun runCatchActionPipeline(crossinline block: suspend () -> Unit) {
+        try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            logE("ActionPipeline", e) { "Occurred Unexpected Exception" }
+        }
+    }
+
+    // --- State & Effect Emitters ---
+
     protected suspend fun emitUiEffect(effect: UE) {
         logV("StateManager") { "emit UiEffect: $effect" }
         _uiEffect.send(effect)
@@ -318,12 +239,36 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     protected suspend fun emitMutation(mutation: M) {
         _uiState.update { currentUiState ->
             val nextUiState = reducer.reduce(currentUiState, mutation)
-            logV(
-                "StateManager"
-            ) {
+            logV("StateManager") {
                 "emit Mutation: $mutation, from UiState: $currentUiState, to UiState: $nextUiState"
             }
             nextUiState
         }
+    }
+
+    // --- Lifecycle ---
+
+    fun onCleared() {
+        intentChannel.close()
+        actionChannel.close()
+        sequentialChannels.values.forEach { it.close() }
+
+        intentLoopJob?.cancel()
+        actionLoopJob?.cancel()
+        sequentialWorkers.values.forEach { it.cancel() }
+        latestActionJobs.values.forEach { it.cancel() }
+
+        sequentialChannels.clear()
+        sequentialWorkers.clear()
+        latestActionJobs.clear()
+    }
+
+    // --- Scope Implementation ---
+
+    protected val stateManagerScope = object : StateManagerScope<US, UE, M> {
+        override fun getUiStateSnapshot(): US = _uiState.value
+        override suspend fun emitUiEffect(effect: UE) = this@BaseStateManager.emitUiEffect(effect)
+        override suspend fun emitMutation(mutation: M) =
+            this@BaseStateManager.emitMutation(mutation)
     }
 }

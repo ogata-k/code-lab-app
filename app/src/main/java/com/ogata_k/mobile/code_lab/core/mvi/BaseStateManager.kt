@@ -60,7 +60,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     /**
      * Intentのミドルウェア一覧
      */
-    private val intentMiddlewares: List<IntentMiddleware<US, I, A>> =
+    protected val intentMiddlewares: List<IntentMiddleware<US, I, A>> =
         MviMiddlewareDefaults.defaultIntentMiddlewares<US, I, A>() + additionalIntentMiddlewares
 
     /**
@@ -125,7 +125,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     /**
      * Actionのミドルウェアの一覧
      */
-    private val actionMiddlewares: List<ActionMiddleware<US, A>> =
+    protected val actionMiddlewares: List<ActionMiddleware<US, A>> =
         MviMiddlewareDefaults.defaultActionMiddlewares<US, A>() + additionalActionMiddlewares
 
     /**

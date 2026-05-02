@@ -28,47 +28,6 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     additionalIntentMiddlewares: List<IntentMiddleware<US, I, A>> = emptyList(),
     additionalActionMiddlewares: List<ActionMiddleware<US, A>> = emptyList(),
 ) {
-    private var intentLoopJob: Job? = null
-    private var actionLoopJob: Job? = null
-
-    /**
-     * 各種パイプラインの初期化
-     * これを呼ばないと**IntentやActionの発火が起きない**ので、
-     * StateMangerの継承先の具象クラスのプロパティの初期化が終わった後から初期化リクエストの前で呼ぶようにする。
-     */
-    fun startPipeline() {
-        if (intentLoopJob != null || actionLoopJob != null) return
-
-        /*
-         * Intentの単一消費ループ。
-         */
-        intentLoopJob = scope.launch {
-            for (intent in intentChannel) {
-                executeIntentPipeline(intent)
-            }
-        }
-
-        /*
-         * Actionの単一消費ループ。
-         *
-         * ここでActionの入口を1つにすることで、
-         * 全体の制御を一元化できる。
-         */
-        actionLoopJob = scope.launch {
-            for (action in actionChannel) {
-                try {
-                    executeActionWithStrategy(action)
-                } catch (e: CancellationException) {
-                    // コルーチンのキャンセルは再スローしてループを正しく終了させる
-                    throw e
-                } catch (e: Throwable) {
-                    // ここでキャッチすることで、メインループは生き残り続ける
-                    logE("ActionChannel", e) { "Critical error in action loop for action: $action" }
-                }
-            }
-        }
-    }
-
     /**
      * 後かたずけ処理
      */
@@ -104,6 +63,17 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
      * そのため、複数の画面でcollectするとどれか一つの画面にしか届かないので注意。
      */
     val uiEffect: Flow<UE> = _uiEffect.receiveAsFlow()
+
+    /**
+     * すべてのIntentはここを通る。
+     */
+    private val intentChannel =
+        Channel<I>(capacity = Channel.BUFFERED)
+
+    /**
+     * dispatchされたIntentの消費Job
+     */
+    private var intentLoopJob: Job? = null
 
     private val intentMiddlewares: List<IntentMiddleware<US, I, A>> =
         MviMiddlewareDefaults.defaultIntentMiddlewares<US, I, A>() + additionalIntentMiddlewares
@@ -156,18 +126,15 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     ) = actionChain(action, stateManagerScope)
 
     /**
-     * すべてのIntentはここを通る。
-     */
-    private val intentChannel =
-        Channel<I>(capacity = Channel.BUFFERED)
-
-    /**
      * すべてのActionはここを通る。
-     *
-     * Intent・外部イベント・ViewModel内部すべてを統一。
      */
     protected val actionChannel =
         Channel<A>(capacity = Channel.BUFFERED)
+
+    /**
+     * dispatchされたActionの消費Job
+     */
+    private var actionLoopJob: Job? = null
 
     /**
      * Actionの最新のみ結果を残す処理用のJob管理
@@ -298,6 +265,15 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
      * Channel経由で順次処理される
      */
     fun dispatchIntent(intent: I) {
+        // Intentの単一消費用のリスナーの登録がまだなら登録
+        if (intentLoopJob == null) {
+            intentLoopJob = scope.launch {
+                for (intent in intentChannel) {
+                    executeIntentPipeline(intent)
+                }
+            }
+        }
+
         val result = intentChannel.trySend(intent)
         if (result.isFailure) {
             logE("IntentChannel") { "Failed to dispatch intent: $intent" }
@@ -308,6 +284,26 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
      * Actionの唯一の入口
      */
     fun dispatchAction(action: A) {
+        // Actionの単一消費用のリスナーの登録がまだなら登録
+        if (actionLoopJob == null) {
+            actionLoopJob = scope.launch {
+                for (action in actionChannel) {
+                    try {
+                        executeActionWithStrategy(action)
+                    } catch (e: CancellationException) {
+                        // コルーチンのキャンセルは再スローしてループを正しく終了させる
+                        throw e
+                    } catch (e: Throwable) {
+                        // ここでキャッチすることで、メインループは生き残り続ける
+                        logE(
+                            "ActionChannel",
+                            e
+                        ) { "Critical error in action loop for action: $action" }
+                    }
+                }
+            }
+        }
+
         val result = actionChannel.trySend(action)
         if (result.isFailure) {
             logE("ActionChannel") { "Failed to dispatch action: $action" }

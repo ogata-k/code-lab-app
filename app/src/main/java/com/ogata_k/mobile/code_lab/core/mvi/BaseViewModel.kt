@@ -11,10 +11,8 @@ abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent<A>, A : Act
     protected val stateManager: BaseStateManager<US, UE, I, A, M>,
 ) : ViewModel(), Store<US, UE, I, A> {
 
-    /* initで初期データのロードを行う。Action.Initializeという初期化リクエストを発行する
+    /* initで初期データのロードを行う。例：Action.Initializeという初期化リクエストを発行する
     init {
-        // 各種状態管理用パイプラインの構築
-        stateManager.startPipeline()
         // 初期データのロード
         dispatchAction(${featureName}Action.Initialize())
     }

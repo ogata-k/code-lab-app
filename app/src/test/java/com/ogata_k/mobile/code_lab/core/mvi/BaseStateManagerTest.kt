@@ -1,11 +1,15 @@
 package com.ogata_k.mobile.code_lab.core.mvi
 
 import app.cash.turbine.test
+import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiController
+import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiEffect
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -56,6 +60,7 @@ class BaseStateManagerTest {
         initialState: TestUiState,
         actionProcessor: ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation>,
         reducer: Reducer<TestUiState, TestMutation>,
+        private val onGlobalEffect: (suspend (GlobalUiEffect) -> Unit)? = null,
         additionalIntentMiddlewares: List<IntentMiddleware<TestUiState, TestIntent, TestAction>> = emptyList(),
         additionalActionMiddlewares: List<ActionMiddleware<TestUiState, TestAction>> = emptyList(),
     ) : BaseStateManager<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>(
@@ -63,6 +68,13 @@ class BaseStateManagerTest {
         initialState = initialState,
         actionProcessor = actionProcessor,
         reducer = reducer,
+        globalUiController = object : GlobalUiController {
+            override val effects: SharedFlow<GlobalUiEffect> = MutableSharedFlow()
+
+            override suspend fun sendUiEffect(effect: GlobalUiEffect) {
+                onGlobalEffect?.invoke(effect)
+            }
+        },
         additionalIntentMiddlewares = additionalIntentMiddlewares,
         additionalActionMiddlewares = additionalActionMiddlewares,
     )
@@ -109,6 +121,31 @@ class BaseStateManagerTest {
             stateManager.dispatchAction(TestAction.Action1("test"))
             assertEquals(TestUiEffect.Effect1("effect"), awaitItem())
         }
+    }
+
+    @Test
+    fun `emitGlobalEffectによってGlobalUiControllerに通知されること`() = runTest {
+        val actionProcessor =
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation>>()
+        val effect = mockk<GlobalUiEffect>()
+        var capturedEffect: GlobalUiEffect? = null
+
+        coEvery { actionProcessor.process(any(), any()) } coAnswers {
+            secondArg<TestScope>().emitGlobalUiEffect(effect)
+        }
+
+        val stateManager = TestStateManager(
+            scope = backgroundScope,
+            initialState = TestUiState.Initial,
+            actionProcessor = actionProcessor,
+            reducer = reducer,
+            onGlobalEffect = { capturedEffect = it }
+        )
+
+        stateManager.dispatchAction(TestAction.Action1("test"))
+        delay(50)
+
+        assertEquals(effect, capturedEffect)
     }
 
     @Test

@@ -148,6 +148,7 @@ tasks.register("generateFeature") {
             "${featureName}StateManager.kt" to """
                 package $packageName
                 
+                import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiController
                 import com.ogata_k.mobile.code_lab.core.mvi.BaseStateManager
                 import kotlinx.coroutines.CoroutineScope
                 
@@ -158,12 +159,14 @@ tasks.register("generateFeature") {
                     scope: CoroutineScope,
                     initialState: ${featureName}UiState,
                     actionProcessor: ${featureName}ActionProcessor,
-                    reducer: ${featureName}Reducer
+                    reducer: ${featureName}Reducer,
+                    globalUiController: GlobalUiController
                 ) : BaseStateManager<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>(
                     scope = scope,
                     initialState = initialState,
                     actionProcessor = actionProcessor,
-                    reducer = reducer
+                    reducer = reducer,
+                    globalUiController = globalUiController
                 )
             """.trimIndent(),
 
@@ -171,6 +174,7 @@ tasks.register("generateFeature") {
                 package $packageName
                 
                 import androidx.lifecycle.viewModelScope
+                import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiController
                 import com.ogata_k.mobile.code_lab.core.mvi.BaseViewModel
                 import dagger.hilt.android.lifecycle.HiltViewModel
                 import javax.inject.Inject
@@ -181,12 +185,14 @@ tasks.register("generateFeature") {
                 @HiltViewModel
                 class ${featureName}ViewModel @Inject constructor(
                     actionProcessor: ${featureName}ActionProcessor,
+                    globalUiController: GlobalUiController
                 ) : BaseViewModel<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>() {
                     override val stateManager: ${featureName}StateManager = ${featureName}StateManager(
                         scope = viewModelScope,
                         initialState = ${featureName}UiState.UnInitialized,
                         actionProcessor = actionProcessor,
-                        reducer = ${featureName}Reducer()
+                        reducer = ${featureName}Reducer(),
+                        globalUiController = globalUiController
                     )
 
                     init {
@@ -297,9 +303,64 @@ tasks.register("generateFeature") {
 
 
         val testTemplates = mapOf(
+            "${featureName}StateManagerTest.kt" to """
+                package $packageName
+                
+                import app.cash.turbine.test
+                import io.mockk.mockk
+                import kotlinx.coroutines.ExperimentalCoroutinesApi
+                import kotlinx.coroutines.test.advanceUntilIdle
+                import kotlinx.coroutines.test.runTest
+                import org.junit.Assert.assertEquals
+                import org.junit.Test
+                
+                /**
+                 * ${featureName}StateManagerのテスト
+                 */
+                @OptIn(ExperimentalCoroutinesApi::class)
+                class ${featureName}StateManagerTest {
+                    @Test
+                    fun `初期状態がUnInitializedであること`() = runTest {
+                        val actionProcessor = ${featureName}ActionProcessor()
+                        val stateManager = ${featureName}StateManager(
+                            scope = backgroundScope,
+                            initialState = ${featureName}UiState.UnInitialized,
+                            actionProcessor = actionProcessor,
+                            reducer = ${featureName}Reducer(),
+                            globalUiController = mockk()
+                        )
+                
+                        assertEquals(${featureName}UiState.UnInitialized, stateManager.uiState.value)
+                    }
+                
+                    @Test
+                    fun `Initializeアクションによって状態がInitializedに更新されること`() = runTest {
+                        val actionProcessor = ${featureName}ActionProcessor()
+                        val stateManager = ${featureName}StateManager(
+                            scope = backgroundScope,
+                            initialState = ${featureName}UiState.UnInitialized,
+                            actionProcessor = actionProcessor,
+                            reducer = ${featureName}Reducer(),
+                            globalUiController = mockk()
+                        )
+                
+                        stateManager.uiState.test {
+                            assertEquals(${featureName}UiState.UnInitialized, awaitItem())
+                
+                            stateManager.dispatchAction(${featureName}Action.Initialize)
+                
+                            advanceUntilIdle()
+                            assertEquals(${featureName}UiState.Initialized, awaitItem())
+                        }
+                    }
+                }
+            """.trimIndent(),
+
             "${featureName}ViewModelTest.kt" to """
                 package $packageName
                 
+                import app.cash.turbine.test
+                import io.mockk.mockk
                 import kotlinx.coroutines.Dispatchers
                 import kotlinx.coroutines.ExperimentalCoroutinesApi
                 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -332,17 +393,18 @@ tasks.register("generateFeature") {
                     @Test
                     fun `初期化時にInitialized状態になること`() = runTest {
                         val actionProcessor = ${featureName}ActionProcessor()
-                        // viewModel uses viewModelScope, which uses Dispatchers.Main (set to testDispatcher above)
-                        val viewModel = ${featureName}ViewModel(actionProcessor)
+                        val viewModel = ${featureName}ViewModel(actionProcessor, mockk())
 
-                        // 初期状態がUnInitializedであることを確認
-                        assertEquals(${featureName}UiState.UnInitialized, viewModel.uiState.value)
+                        viewModel.uiState.test {
+                            // 初期状態がUnInitializedであることを確認
+                            assertEquals(${featureName}UiState.UnInitialized, awaitItem())
 
-                        // Initializeアクションが完了するまで待機
-                        advanceUntilIdle()
+                            // Initializeアクションが完了するまで待機
+                            advanceUntilIdle()
 
-                        // viewModel.init内でInitializeアクションが呼ばれる想定
-                        assertEquals(${featureName}UiState.Initialized, viewModel.uiState.value)
+                            // viewModel.init内でInitializeアクションが呼ばれる想定
+                            assertEquals(${featureName}UiState.Initialized, awaitItem())
+                        }
                     }
                 }
             """.trimIndent(),
@@ -357,7 +419,6 @@ tasks.register("generateFeature") {
                  * ${featureName}Reducerのテスト
                  */
                 class ${featureName}ReducerTest {
-                
                     private val reducer = ${featureName}Reducer()
                 
                     @Test

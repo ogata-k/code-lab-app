@@ -1,6 +1,7 @@
 package com.ogata_k.mobile.code_lab.core.mvi
 
 import com.ogata_k.mobile.code_lab.common.BuildConfig
+import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiEffect
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -179,6 +180,8 @@ interface StateManagerScope<US : UiState, UE : UiEffect, M : Mutation> {
     }
 
     suspend fun emitUiEffect(effect: UE)
+
+    suspend fun emitGlobalUiEffect(effect: GlobalUiEffect)
 
     suspend fun emitMutation(mutation: M)
 }

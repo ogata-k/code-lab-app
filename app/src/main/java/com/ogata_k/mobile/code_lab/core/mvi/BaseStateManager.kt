@@ -1,5 +1,7 @@
 package com.ogata_k.mobile.code_lab.core.mvi
 
+import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiController
+import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiEffect
 import com.ogata_k.mobile.code_lab.common.logE
 import com.ogata_k.mobile.code_lab.common.logV
 import com.ogata_k.mobile.code_lab.core.mvi.middleware.MviMiddlewareDefaults
@@ -25,6 +27,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     protected val actionProcessor: ActionProcessor<US, UE, A, M>,
     // ここでReducerを渡すことでreducer自体はSとMからしか計算できない純粋関数みたいなものであることを保証する
     private val reducer: Reducer<US, M>,
+    private val globalUiController: GlobalUiController,
     additionalIntentMiddlewares: List<IntentMiddleware<US, I, A>> = emptyList(),
     additionalActionMiddlewares: List<ActionMiddleware<US, A>> = emptyList(),
 ) {
@@ -232,6 +235,11 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
                             stateManagerScope.emitUiEffect(effect)
                         }
 
+                        override suspend fun emitGlobalUiEffect(effect: GlobalUiEffect) {
+                            stateManagerScope.ensureActive()
+                            stateManagerScope.emitGlobalUiEffect(effect)
+                        }
+
                         override suspend fun emitMutation(mutation: M) {
                             // 最新のみ残す戦略では停止状態になっていれば後続の新しいものがあったということなので、
                             // 途中で止める
@@ -317,6 +325,9 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     protected val stateManagerScope = object : StateManagerScope<US, UE, M> {
         override fun getUiStateSnapshot(): US = _uiState.value
         override suspend fun emitUiEffect(effect: UE) = this@BaseStateManager.emitUiEffect(effect)
+        override suspend fun emitGlobalUiEffect(effect: GlobalUiEffect) =
+            this@BaseStateManager.globalUiController.sendUiEffect(effect)
+
         override suspend fun emitMutation(mutation: M) =
             this@BaseStateManager.emitMutation(mutation)
     }

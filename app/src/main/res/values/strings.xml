@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">CodeLab</string>
+
+    <!-- ボタン -->
+    <string name="btn_close">閉じる</string>
+    <string name="btn_cancel">キャンセル</string>
+
+    <!-- ダイアログ -->
+    <string name="dialog_title_error">エラー</string>
+    <string name="dialog_title_confirm">確認</string>
 </resources>

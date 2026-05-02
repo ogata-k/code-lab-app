@@ -1,6 +1,7 @@
 package com.ogata_k.mobile.code_lab.feature.home
 
 import app.cash.turbine.test
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -17,7 +18,8 @@ class HomeStateManagerTest {
             scope = backgroundScope,
             initialState = HomeUiState.UnInitialized,
             actionProcessor = actionProcessor,
-            reducer = HomeReducer()
+            reducer = HomeReducer(),
+            globalUiController = mockk()
         )
 
         assertEquals(HomeUiState.UnInitialized, stateManager.uiState.value)
@@ -30,7 +32,8 @@ class HomeStateManagerTest {
             scope = backgroundScope,
             initialState = HomeUiState.UnInitialized,
             actionProcessor = actionProcessor,
-            reducer = HomeReducer()
+            reducer = HomeReducer(),
+            globalUiController = mockk()
         )
 
         stateManager.uiState.test {
@@ -50,7 +53,8 @@ class HomeStateManagerTest {
             scope = backgroundScope,
             initialState = HomeUiState.UnInitialized,
             actionProcessor = actionProcessor,
-            reducer = HomeReducer()
+            reducer = HomeReducer(),
+            globalUiController = mockk()
         )
 
         stateManager.uiEffect.test {

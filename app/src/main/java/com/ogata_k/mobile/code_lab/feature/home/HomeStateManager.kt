@@ -1,5 +1,6 @@
 package com.ogata_k.mobile.code_lab.feature.home
 
+import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiController
 import com.ogata_k.mobile.code_lab.core.mvi.BaseStateManager
 import kotlinx.coroutines.CoroutineScope
 
@@ -10,10 +11,12 @@ class HomeStateManager(
     scope: CoroutineScope,
     initialState: HomeUiState,
     actionProcessor: HomeActionProcessor,
-    reducer: HomeReducer
+    reducer: HomeReducer,
+    globalUiController: GlobalUiController
 ) : BaseStateManager<HomeUiState, HomeUiEffect, HomeIntent, HomeAction, HomeMutation>(
     scope = scope,
     initialState = initialState,
     actionProcessor = actionProcessor,
-    reducer = reducer
+    reducer = reducer,
+    globalUiController = globalUiController
 )

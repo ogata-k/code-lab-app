@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 /**
- * Homeのメイン画面を表示するComposable関数
+ * Home featureのメイン画面を表示するComposable関数
  */
 @Composable
 fun HomeScreen(

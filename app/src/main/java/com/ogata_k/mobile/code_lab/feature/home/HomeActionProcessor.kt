@@ -5,7 +5,7 @@ import com.ogata_k.mobile.code_lab.core.mvi.StateManagerScope
 import javax.inject.Inject
 
 /**
- * Homeのアクションを処理し、ミューテーションを生成するクラス
+ * Home featureのアクションを処理し、ミューテーションを生成するクラス
  */
 class HomeActionProcessor @Inject constructor() :
     ActionProcessor<HomeUiState, HomeUiEffect, HomeAction, HomeMutation> {

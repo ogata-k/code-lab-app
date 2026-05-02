@@ -7,9 +7,10 @@ import kotlinx.coroutines.flow.StateFlow
 /**
  * featureで利用するViewModelの継承元のモデル
  */
-abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent<A>, A : Action, M : Mutation>(
-    protected val stateManager: BaseStateManager<US, UE, I, A, M>,
-) : ViewModel(), Store<US, UE, I, A> {
+abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent<A>, A : Action, M : Mutation> :
+    ViewModel(), Store<US, UE, I, A> {
+
+    protected abstract val stateManager: BaseStateManager<US, UE, I, A, M>
 
     /* initで初期データのロードを行う。例：Action.Initializeという初期化リクエストを発行する
     init {
@@ -22,8 +23,6 @@ abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent<A>, A : Act
         super.onCleared()
         stateManager.onCleared()
     }
-
-    // @todo 必要ならstateManager.actionProcessorのイベントをここで監視して、必要ならstateManager.executeActionPipelineで処理するリスナーを登録する
 
     override val uiState: StateFlow<US> get() = stateManager.uiState
 

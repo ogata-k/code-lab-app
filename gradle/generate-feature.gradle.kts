@@ -27,7 +27,7 @@ tasks.register("generateFeature") {
                 import com.ogata_k.mobile.code_lab.core.mvi.UiState
                 
                 /**
-                 * ${featureName}のUI状態
+                 * ${featureName} featureのUI状態
                  */
                 sealed interface ${featureName}UiState : UiState {
                     data object UnInitialized : ${featureName}UiState
@@ -40,7 +40,7 @@ tasks.register("generateFeature") {
                 import com.ogata_k.mobile.code_lab.core.mvi.UiEffect
                 
                 /**
-                 * ${featureName}のUI副作用（ワンショットのイベント）
+                 * ${featureName} featureのUI副作用（ワンショットのイベント）
                  */
                 sealed interface ${featureName}UiEffect : UiEffect
             """.trimIndent(),
@@ -49,12 +49,15 @@ tasks.register("generateFeature") {
                 package $packageName
                 
                 import com.ogata_k.mobile.code_lab.core.mvi.Action
+                import com.ogata_k.mobile.code_lab.core.mvi.ExecutionStrategy
                 
                 /**
-                 * ${featureName}の内部で処理されるアクション
+                 * ${featureName} featureの内部で処理されるアクション
                  */
                 sealed interface ${featureName}Action : Action {
-                    data object Initialize : ${featureName}Action
+                    data object Initialize : ${featureName}Action {
+                        override val strategy: ExecutionStrategy = ExecutionStrategy.Parallel
+                    }
                 }
             """.trimIndent(),
 
@@ -64,9 +67,14 @@ tasks.register("generateFeature") {
                 import com.ogata_k.mobile.code_lab.core.mvi.Intent
                 
                 /**
-                 * ${featureName}に対するユーザーの意図（操作）
+                 * ${featureName} featureに対するユーザーの意図（操作）
                  */
-                sealed interface ${featureName}Intent : Intent<${featureName}Action>
+                sealed interface ${featureName}Intent : Intent<${featureName}Action> {
+                    override fun toAction(): ${featureName}Action? = when (this) {
+                        // TODO: Intentが増えたらここに追加
+                        else -> null
+                    }
+                }
             """.trimIndent(),
 
             "${featureName}Mutation.kt" to """
@@ -75,7 +83,7 @@ tasks.register("generateFeature") {
                 import com.ogata_k.mobile.code_lab.core.mvi.Mutation
                 
                 /**
-                 * ${featureName}の状態を変更するための変更内容
+                 * ${featureName} featureの状態を変更するための変更内容
                  */
                 sealed interface ${featureName}Mutation : Mutation
             """.trimIndent(),
@@ -88,7 +96,7 @@ tasks.register("generateFeature") {
                 import javax.inject.Inject
                 
                 /**
-                 * ${featureName}のアクションを処理し、ミューテーションを生成するクラス
+                 * ${featureName} featureのアクションを処理し、ミューテーションを生成するクラス
                  */
                 class ${featureName}ActionProcessor @Inject constructor() : ActionProcessor<${featureName}UiState, ${featureName}UiEffect, ${featureName}Action, ${featureName}Mutation> {
                     override suspend fun process(
@@ -110,7 +118,7 @@ tasks.register("generateFeature") {
                 import com.ogata_k.mobile.code_lab.core.mvi.Reducer
                 
                 /**
-                 * ${featureName}の現在の状態とミューテーションから新しい状態を生成するクラス
+                 * ${featureName} featureの現在の状態とミューテーションから新しい状態を生成するクラス
                  */
                 class ${featureName}Reducer : Reducer<${featureName}UiState, ${featureName}Mutation> {
                     override fun reduce(
@@ -127,15 +135,18 @@ tasks.register("generateFeature") {
                 package $packageName
                 
                 import com.ogata_k.mobile.code_lab.core.mvi.BaseStateManager
+                import kotlinx.coroutines.CoroutineScope
                 
                 /**
-                 * ${featureName}の状態管理を統括するクラス
+                 * ${featureName} featureの状態管理を統括するクラス
                  */
                 class ${featureName}StateManager(
+                    scope: CoroutineScope,
                     initialState: ${featureName}UiState,
                     actionProcessor: ${featureName}ActionProcessor,
                     reducer: ${featureName}Reducer
                 ) : BaseStateManager<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>(
+                    scope = scope,
                     initialState = initialState,
                     actionProcessor = actionProcessor,
                     reducer = reducer
@@ -145,23 +156,25 @@ tasks.register("generateFeature") {
             "${featureName}ViewModel.kt" to """
                 package $packageName
                 
+                import androidx.lifecycle.viewModelScope
                 import com.ogata_k.mobile.code_lab.core.mvi.BaseViewModel
                 import dagger.hilt.android.lifecycle.HiltViewModel
                 import javax.inject.Inject
                 
                 /**
-                 * ${featureName}のViewModel
+                 * ${featureName} featureのViewModel
                  */
                 @HiltViewModel
                 class ${featureName}ViewModel @Inject constructor(
                     actionProcessor: ${featureName}ActionProcessor,
-                ) : BaseViewModel<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>(
-                    stateManager = ${featureName}StateManager(
+                ) : BaseViewModel<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>() {
+                    override val stateManager: ${featureName}StateManager = ${featureName}StateManager(
+                        scope = viewModelScope,
                         initialState = ${featureName}UiState.UnInitialized,
                         actionProcessor = actionProcessor,
                         reducer = ${featureName}Reducer()
                     )
-                ) {
+
                     init {
                         // 初期データのロード
                         dispatchAction(${featureName}Action.Initialize)
@@ -182,7 +195,7 @@ tasks.register("generateFeature") {
                 import androidx.lifecycle.repeatOnLifecycle
                 
                 /**
-                 * ${featureName}のナビゲーションルートとなるComposable関数
+                 * ${featureName} featureのナビゲーションルートとなるComposable関数
                  */
                 @Composable
                 fun ${featureName}Route(
@@ -214,7 +227,7 @@ tasks.register("generateFeature") {
                 import androidx.compose.ui.Modifier
                 
                 /**
-                 * ${featureName}のメイン画面を表示するComposable関数
+                 * ${featureName} featureのメイン画面を表示するComposable関数
                  */
                 @Composable
                 fun ${featureName}Screen(

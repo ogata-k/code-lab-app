@@ -11,6 +11,11 @@ sealed interface GlobalUiEffect {
         val onAction: (() -> Unit)? = null
     ) : GlobalUiEffect
 
+    data class ShowToast(
+        val message: String,
+        val showLong: Boolean = false,
+    ) : GlobalUiEffect
+
     data class ShowErrorDialog(
         val message: String,
         val onDismiss: (() -> Unit),

@@ -1,10 +1,12 @@
 package com.ogata_k.mobile.code_lab
 
+import android.annotation.SuppressLint
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.activity.viewModels
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -15,14 +17,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiController
 import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiEffect
 import com.ogata_k.mobile.code_lab.feature.home.HomeRoute
 import com.ogata_k.mobile.code_lab.ui.theme.CodeLabTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -30,12 +33,19 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var globalUiController: GlobalUiController
 
+    private val viewModel: MainViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             CodeLabTheme {
-                AppMain(globalUiController = globalUiController) {
+                AppMain(
+                    globalUiController = globalUiController,
+                    dialogQueue = viewModel.dialogQueue,
+                    onAddDialog = viewModel::addDialog,
+                    onRemoveDialog = viewModel::removeDialog
+                ) {
                     HomeRoute()
                 }
             }
@@ -46,24 +56,45 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppMain(
     globalUiController: GlobalUiController,
-    content: @Composable (PaddingValues) -> Unit
+    dialogQueue: List<GlobalUiEffect>,
+    onAddDialog: (GlobalUiEffect) -> Unit,
+    onRemoveDialog: (GlobalUiEffect) -> Unit,
+    content: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
+
     val snackbarHostState = remember { SnackbarHostState() }
-    // ダイアログをリスト（キュー）で保持
-    val dialogQueue = remember { mutableStateListOf<GlobalUiEffect>() }
 
     LaunchedEffect(globalUiController) {
         globalUiController.effects.collect { effect ->
             when (effect) {
+                // SnackbarとFABの重なりには一応注意が必要。
+                // AppMainでSnackbarを表示し、HomeScreenなど固有の画面にFloatingActionButton(FAB)を置いた場合、
+                // SnackbarがFABの上に被さって表示される可能性がある。
+                // （同じScaffold内であれば自動で避けてくれますが、別々のScaffoldだと位置の調整が行われないため。）
                 is GlobalUiEffect.ShowSnackbar -> {
-                    val result = snackbarHostState.showSnackbar(
-                        message = effect.message,
-                        actionLabel = effect.actionLabel,
-                        duration = SnackbarDuration.Short,
-                        withDismissAction = true
-                    )
-                    if (result == SnackbarResult.ActionPerformed) {
-                        effect.onAction?.invoke()
+                    launch {
+                        val result = snackbarHostState.showSnackbar(
+                            message = effect.message,
+                            actionLabel = effect.actionLabel,
+                            duration = SnackbarDuration.Short,
+                            withDismissAction = true
+                        )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            effect.onAction?.invoke()
+                        }
+                    }
+                }
+
+                is GlobalUiEffect.ShowToast -> {
+                    launch {
+                        val duration = if (effect.showLong) {
+                            Toast.LENGTH_LONG
+                        } else {
+                            Toast.LENGTH_SHORT
+                        }
+                        val toast = Toast.makeText(context, effect.message, duration)
+                        toast.show()
                     }
                 }
 
@@ -72,21 +103,26 @@ fun AppMain(
                 is GlobalUiEffect.ShowRequestActionDialog,
                     -> {
                     // ダイアログをキューに追加
-                    dialogQueue.add(effect)
+                    onAddDialog(effect)
                 }
             }
         }
     }
 
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { innerPadding ->
-        content(innerPadding)
+    ) { // ボトムナビゲーションを採用していないので、
+        // 各Route内でScaffoldのパディングを再計算したものを使うかたちで問題ない。
+            _ ->
+        content()
 
         // キューの先頭にあるダイアログを表示
         dialogQueue.firstOrNull()?.let { effect ->
             when (effect) {
-                is GlobalUiEffect.ShowSnackbar -> {
+                is GlobalUiEffect.ShowSnackbar,
+                is GlobalUiEffect.ShowToast,
+                    -> {
                     // ダイアログ用ではないので処理の必要はなし
                 }
 
@@ -94,14 +130,14 @@ fun AppMain(
                     AlertDialog(
                         onDismissRequest = {
                             effect.onDismiss.invoke()
-                            dialogQueue.remove(effect)
+                            onRemoveDialog(effect)
                         },
                         title = { Text(stringResource(R.string.dialog_title_error)) },
                         text = { Text(effect.message) },
                         confirmButton = {
                             TextButton(onClick = {
                                 effect.onDismiss.invoke()
-                                dialogQueue.remove(effect)
+                                onRemoveDialog(effect)
                             }) {
                                 Text(stringResource(R.string.btn_close))
                             }
@@ -113,14 +149,14 @@ fun AppMain(
                     AlertDialog(
                         onDismissRequest = {
                             effect.onDismiss.invoke()
-                            dialogQueue.remove(effect)
+                            onRemoveDialog(effect)
                         },
                         title = { Text(stringResource(R.string.dialog_title_confirm)) },
                         text = { Text(effect.message) },
                         confirmButton = {
                             TextButton(onClick = {
                                 effect.onDismiss()
-                                dialogQueue.remove(effect)
+                                onRemoveDialog(effect)
                             }) {
                                 Text(stringResource(R.string.btn_close))
                             }
@@ -132,14 +168,14 @@ fun AppMain(
                     AlertDialog(
                         onDismissRequest = {
                             effect.onDismiss.invoke()
-                            dialogQueue.remove(effect)
+                            onRemoveDialog(effect)
                         },
                         title = { Text(effect.title) },
                         text = { Text(effect.message) },
                         dismissButton = {
                             TextButton(onClick = {
                                 effect.onDismiss()
-                                dialogQueue.remove(effect)
+                                onRemoveDialog(effect)
                             }) {
                                 Text(effect.cancelButtonText ?: stringResource(R.string.btn_cancel))
                             }
@@ -147,7 +183,7 @@ fun AppMain(
                         confirmButton = {
                             TextButton(onClick = {
                                 effect.onAction()
-                                dialogQueue.remove(effect)
+                                onRemoveDialog(effect)
                             }) {
                                 Text(effect.actionButtonText)
                             }

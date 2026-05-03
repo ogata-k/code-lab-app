@@ -1,5 +1,6 @@
 package com.ogata_k.mobile.code_lab.feature.home
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -13,6 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.ogata_k.mobile.code_lab.R
 import com.ogata_k.mobile.code_lab.common.BuildConfig
 import com.ogata_k.mobile.code_lab.ui.theme.CodeLabTheme
+import com.ogata_k.mobile.code_lab.ui.widget.screen.ScreenContainer
 
 /**
  * Home featureのメイン画面を表示するComposable関数
@@ -22,16 +24,22 @@ fun HomeScreen(
     uiState: HomeUiState,
     onIntent: (HomeIntent) -> Unit,
     snackbarHostState: SnackbarHostState,
-    modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { innerPadding ->
-        Greeting(
-            name = uiState.toString(),
-            modifier = Modifier.padding(innerPadding)
-        )
+    ScreenContainer {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            snackbarHost = { SnackbarHost(snackbarHostState) }
+        ) { innerPadding ->
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                Greeting(
+                    name = uiState.toString(),
+                )
+            }
+        }
     }
 }
 

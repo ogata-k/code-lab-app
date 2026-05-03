@@ -1,14 +1,15 @@
 package com.ogata_k.mobile.code_lab
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -18,6 +19,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiController
@@ -107,13 +110,17 @@ fun AppMain(
         }
     }
 
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { // ボトムナビゲーションを採用していないので、
-        // 各Route内でScaffoldのパディングを再計算したものを使うかたちで問題ない。
-            _ ->
+    Box(modifier = Modifier.fillMaxSize()) {
+        // メインUI
         content()
+
+        // メインUIで消されないようにスナックバーを別途表示させる
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+        )
 
         // キューの先頭にあるダイアログを表示
         dialogQueue.firstOrNull()?.let { effect ->
@@ -190,5 +197,6 @@ fun AppMain(
                 }
             }
         }
+
     }
 }

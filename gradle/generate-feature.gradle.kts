@@ -243,6 +243,7 @@ tasks.register("generateFeature") {
             "${featureName}Screen.kt" to """
                 package $packageName
                 
+                import androidx.compose.foundation.layout.Box
                 import androidx.compose.foundation.layout.fillMaxSize
                 import androidx.compose.foundation.layout.padding
                 import androidx.compose.material3.Scaffold
@@ -253,6 +254,7 @@ tasks.register("generateFeature") {
                 import androidx.compose.ui.tooling.preview.Preview
                 import com.ogata_k.mobile.code_lab.R
                 import com.ogata_k.mobile.code_lab.ui.theme.CodeLabTheme
+                import com.ogata_k.mobile.code_lab.ui.widget.screen.ScreenContainer
                 
                 /**
                  * ${featureName} featureのメイン画面を表示するComposable関数
@@ -261,14 +263,21 @@ tasks.register("generateFeature") {
                 fun ${featureName}Screen(
                     uiState: ${featureName}UiState,
                     onIntent: (${featureName}Intent) -> Unit,
-                    modifier: Modifier = Modifier
                 ) {
-                    // TODO 実際のUI実装
-                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                        Greeting(
-                            name = uiState.toString(),
-                            modifier = Modifier.padding(innerPadding)
-                        )
+                    ScreenContainer {
+                        Scaffold(
+                            modifier = Modifier.fillMaxSize(),
+                        ) { innerPadding ->
+                            Box(
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(innerPadding)
+                            ) {
+                                Greeting(
+                                    name = uiState.toString(),
+                                )
+                            }
+                        }
                     }
                 }
                 

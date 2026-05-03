@@ -24,17 +24,17 @@ class BaseViewModelTest {
     sealed interface TestMutation : Mutation
 
     class TestViewModel(
-        override val stateManager: BaseStateManager<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>
+        override val store: BaseStore<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>
     ) : BaseViewModel<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>()
 
     @Test
-    fun `uiStateがstateManagerに委譲されていること`() = runTest {
+    fun `uiStateがstoreに委譲されていること`() = runTest {
         val stateFlow = MutableStateFlow<TestUiState>(TestUiState.Initial)
-        val stateManager =
-            mockk<BaseStateManager<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
-        coEvery { stateManager.uiState } returns stateFlow.asStateFlow()
+        val store =
+            mockk<BaseStore<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
+        coEvery { store.uiState } returns stateFlow.asStateFlow()
 
-        val viewModel = TestViewModel(stateManager)
+        val viewModel = TestViewModel(store)
 
         viewModel.uiState.test {
             assertEquals(TestUiState.Initial, awaitItem())
@@ -42,16 +42,16 @@ class BaseViewModelTest {
     }
 
     @Test
-    fun `dispatchIntentがstateManagerに委譲されていること`() = runTest {
-        val stateManager =
-            mockk<BaseStateManager<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>(
+    fun `dispatchIntentがstoreに委譲されていること`() = runTest {
+        val store =
+            mockk<BaseStore<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>(
                 relaxed = true
             )
-        val viewModel = TestViewModel(stateManager)
+        val viewModel = TestViewModel(store)
         val intent = mockk<TestIntent>()
 
         viewModel.dispatchIntent(intent)
 
-        io.mockk.verify { stateManager.dispatchIntent(intent) }
+        io.mockk.verify { store.dispatchIntent(intent) }
     }
 }

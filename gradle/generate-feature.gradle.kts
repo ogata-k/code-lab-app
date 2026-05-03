@@ -103,7 +103,7 @@ tasks.register("generateFeature") {
                 package $packageName
                 
                 import com.ogata_k.mobile.code_lab.core.mvi.ActionProcessor
-                import com.ogata_k.mobile.code_lab.core.mvi.StateManagerScope
+                import com.ogata_k.mobile.code_lab.core.mvi.StoreScope
                 import javax.inject.Inject
                 
                 /**
@@ -112,7 +112,7 @@ tasks.register("generateFeature") {
                 class ${featureName}ActionProcessor @Inject constructor() : ActionProcessor<${featureName}UiState, ${featureName}UiEffect, ${featureName}Action, ${featureName}Mutation> {
                     override suspend fun process(
                         action: ${featureName}Action,
-                        scope: StateManagerScope<${featureName}UiState, ${featureName}UiEffect, ${featureName}Mutation>
+                        scope: StoreScope<${featureName}UiState, ${featureName}UiEffect, ${featureName}Mutation>
                     ) {
                         when (action) {
                             is ${featureName}Action.Initialize -> {
@@ -145,23 +145,23 @@ tasks.register("generateFeature") {
                 }
             """.trimIndent(),
 
-            "${featureName}StateManager.kt" to """
+            "${featureName}Store.kt" to """
                 package $packageName
                 
                 import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiController
-                import com.ogata_k.mobile.code_lab.core.mvi.BaseStateManager
+                import com.ogata_k.mobile.code_lab.core.mvi.BaseStore
                 import kotlinx.coroutines.CoroutineScope
                 
                 /**
                  * ${featureName} featureの状態管理を統括するクラス
                  */
-                class ${featureName}StateManager(
+                class ${featureName}Store(
                     scope: CoroutineScope,
                     initialState: ${featureName}UiState,
                     actionProcessor: ${featureName}ActionProcessor,
                     reducer: ${featureName}Reducer,
                     globalUiController: GlobalUiController
-                ) : BaseStateManager<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>(
+                ) : BaseStore<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>(
                     scope = scope,
                     initialState = initialState,
                     actionProcessor = actionProcessor,
@@ -187,7 +187,7 @@ tasks.register("generateFeature") {
                     actionProcessor: ${featureName}ActionProcessor,
                     globalUiController: GlobalUiController
                 ) : BaseViewModel<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>() {
-                    override val stateManager: ${featureName}StateManager = ${featureName}StateManager(
+                    override val store: ${featureName}Store = ${featureName}Store(
                         scope = viewModelScope,
                         initialState = ${featureName}UiState.UnInitialized,
                         actionProcessor = actionProcessor,
@@ -303,7 +303,7 @@ tasks.register("generateFeature") {
 
 
         val testTemplates = mapOf(
-            "${featureName}StateManagerTest.kt" to """
+            "${featureName}StoreTest.kt" to """
                 package $packageName
                 
                 import app.cash.turbine.test
@@ -315,14 +315,14 @@ tasks.register("generateFeature") {
                 import org.junit.Test
                 
                 /**
-                 * ${featureName}StateManagerのテスト
+                 * ${featureName}Storeのテスト
                  */
                 @OptIn(ExperimentalCoroutinesApi::class)
-                class ${featureName}StateManagerTest {
+                class ${featureName}StoreTest {
                     @Test
                     fun `初期状態がUnInitializedであること`() = runTest {
                         val actionProcessor = ${featureName}ActionProcessor()
-                        val stateManager = ${featureName}StateManager(
+                        val store = ${featureName}Store(
                             scope = backgroundScope,
                             initialState = ${featureName}UiState.UnInitialized,
                             actionProcessor = actionProcessor,
@@ -330,13 +330,13 @@ tasks.register("generateFeature") {
                             globalUiController = mockk()
                         )
                 
-                        assertEquals(${featureName}UiState.UnInitialized, stateManager.uiState.value)
+                        assertEquals(${featureName}UiState.UnInitialized, store.uiState.value)
                     }
                 
                     @Test
                     fun `Initializeアクションによって状態がInitializedに更新されること`() = runTest {
                         val actionProcessor = ${featureName}ActionProcessor()
-                        val stateManager = ${featureName}StateManager(
+                        val store = ${featureName}Store(
                             scope = backgroundScope,
                             initialState = ${featureName}UiState.UnInitialized,
                             actionProcessor = actionProcessor,
@@ -344,10 +344,10 @@ tasks.register("generateFeature") {
                             globalUiController = mockk()
                         )
                 
-                        stateManager.uiState.test {
+                        store.uiState.test {
                             assertEquals(${featureName}UiState.UnInitialized, awaitItem())
                 
-                            stateManager.dispatchAction(${featureName}Action.Initialize)
+                            store.dispatchAction(${featureName}Action.Initialize)
                 
                             advanceUntilIdle()
                             assertEquals(${featureName}UiState.Initialized, awaitItem())

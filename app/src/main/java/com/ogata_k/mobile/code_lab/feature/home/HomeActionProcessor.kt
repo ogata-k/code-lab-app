@@ -1,7 +1,7 @@
 package com.ogata_k.mobile.code_lab.feature.home
 
 import com.ogata_k.mobile.code_lab.core.mvi.ActionProcessor
-import com.ogata_k.mobile.code_lab.core.mvi.StateManagerScope
+import com.ogata_k.mobile.code_lab.core.mvi.StoreScope
 import kotlinx.coroutines.delay
 import javax.inject.Inject
 
@@ -12,7 +12,7 @@ class HomeActionProcessor @Inject constructor() :
     ActionProcessor<HomeUiState, HomeUiEffect, HomeAction, HomeMutation> {
     override suspend fun process(
         action: HomeAction,
-        scope: StateManagerScope<HomeUiState, HomeUiEffect, HomeMutation>
+        scope: StoreScope<HomeUiState, HomeUiEffect, HomeMutation>
     ) {
         when (action) {
             is HomeAction.Initialize -> {

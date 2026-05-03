@@ -162,17 +162,40 @@ interface ActionMiddleware<US : UiState, A : Action> {
 }
 
 /**
- * StateManager内でアクションの実際の処理を提供するプロセッサーのマーカーインターフェース。
+ * Store内でアクションの実際の処理を提供するプロセッサーのマーカーインターフェース。
  * UseCaseをハンドリングするInteractorのようなものとなる。
  */
 interface ActionProcessor<US : UiState, UE : UiEffect, A : Action, M : Mutation> {
-    suspend fun process(action: A, scope: StateManagerScope<US, UE, M>)
+    suspend fun process(action: A, scope: StoreScope<US, UE, M>)
+}
+
+interface Store<US : UiState, UE : UiEffect, I : Intent<A>, A : Action, M : Mutation> {
+    /**
+     * UI用の状態。UIはこの状態をもとに表示する。
+     */
+    val uiState: StateFlow<US>
+
+    /**
+     * UI用のサイドエフェクト。SharedFlowもいいがナビゲーションにも使うので二重発火をさけるためにもChannelにしている。
+     * そのため、複数の画面でcollectするとどれか一つの画面にしか届かないので注意。
+     */
+    val uiEffect: Flow<UE>
+
+    /**
+     * Intentを発火
+     */
+    fun dispatchIntent(intent: I)
+
+    /**
+     * Actionを発火
+     */
+    fun dispatchAction(action: A)
 }
 
 /**
- * StateManager内での処理に必要な機能をまとめたインターフェース
+ * Store内での処理に必要な機能をまとめたインターフェース
  */
-interface StateManagerScope<US : UiState, UE : UiEffect, M : Mutation> {
+interface StoreScope<US : UiState, UE : UiEffect, M : Mutation> {
     fun getUiStateSnapshot(): US
 
     suspend fun ensureActive() {
@@ -198,9 +221,10 @@ interface Reducer<US : UiState, M : Mutation> {
 
 /**
  * UIに関する状態と操作ディスパッチャーを保持するクラス用のインターフェース。
+ * StoreをViewに対して提供し、ライフサイクルを守る「器」となる。
  * 大抵はViewModelがこのインターフェースの実装を担当する。
  */
-interface Store<US : UiState, UE : UiEffect, I : Intent<A>, A : Action> {
+interface StoreContainer<US : UiState, UE : UiEffect, I : Intent<A>, A : Action> {
     /**
      * UI用の状態。UIはこの状態をもとに表示する。
      */

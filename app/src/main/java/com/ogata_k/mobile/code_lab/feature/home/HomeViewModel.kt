@@ -14,7 +14,7 @@ class HomeViewModel @Inject constructor(
     actionProcessor: HomeActionProcessor,
     globalUiController: GlobalUiController,
 ) : BaseViewModel<HomeUiState, HomeUiEffect, HomeIntent, HomeAction, HomeMutation>() {
-    override val stateManager: HomeStateManager = HomeStateManager(
+    override val store: HomeStore = HomeStore(
         scope = viewModelScope,
         initialState = HomeUiState.UnInitialized,
         actionProcessor = actionProcessor,

@@ -9,12 +9,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class HomeStateManagerTest {
-
+class HomeStoreTest {
     @Test
     fun `初期状態がUnInitializedであること`() = runTest {
         val actionProcessor = HomeActionProcessor()
-        val stateManager = HomeStateManager(
+        val store = HomeStore(
             scope = backgroundScope,
             initialState = HomeUiState.UnInitialized,
             actionProcessor = actionProcessor,
@@ -22,13 +21,13 @@ class HomeStateManagerTest {
             globalUiController = mockk()
         )
 
-        assertEquals(HomeUiState.UnInitialized, stateManager.uiState.value)
+        assertEquals(HomeUiState.UnInitialized, store.uiState.value)
     }
 
     @Test
     fun `Initializeアクションによって状態がInitializedに更新されること`() = runTest {
         val actionProcessor = HomeActionProcessor()
-        val stateManager = HomeStateManager(
+        val store = HomeStore(
             scope = backgroundScope,
             initialState = HomeUiState.UnInitialized,
             actionProcessor = actionProcessor,
@@ -36,10 +35,10 @@ class HomeStateManagerTest {
             globalUiController = mockk()
         )
 
-        stateManager.uiState.test {
+        store.uiState.test {
             assertEquals(HomeUiState.UnInitialized, awaitItem())
 
-            stateManager.dispatchAction(HomeAction.Initialize)
+            store.dispatchAction(HomeAction.Initialize)
 
             advanceTimeBy(1001)
             assertEquals(HomeUiState.Initialized, awaitItem())
@@ -49,7 +48,7 @@ class HomeStateManagerTest {
     @Test
     fun `InitializeアクションによってSnackbar表示エフェクトが発行されること`() = runTest {
         val actionProcessor = HomeActionProcessor()
-        val stateManager = HomeStateManager(
+        val store = HomeStore(
             scope = backgroundScope,
             initialState = HomeUiState.UnInitialized,
             actionProcessor = actionProcessor,
@@ -57,8 +56,8 @@ class HomeStateManagerTest {
             globalUiController = mockk()
         )
 
-        stateManager.uiEffect.test {
-            stateManager.dispatchAction(HomeAction.Initialize)
+        store.uiEffect.test {
+            store.dispatchAction(HomeAction.Initialize)
 
             advanceTimeBy(1001)
             assertEquals(HomeUiEffect.ShowInitializedSnackbar, awaitItem())

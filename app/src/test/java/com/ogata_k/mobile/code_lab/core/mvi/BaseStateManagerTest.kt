@@ -15,10 +15,10 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-private typealias TestScope = StateManagerScope<BaseStateManagerTest.TestUiState, BaseStateManagerTest.TestUiEffect, BaseStateManagerTest.TestMutation>
+private typealias TestScope = StoreScope<BaseStoreTest.TestUiState, BaseStoreTest.TestUiEffect, BaseStoreTest.TestMutation>
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class BaseStateManagerTest {
+class BaseStoreTest {
 
     // Test implementations
     sealed interface TestUiState : UiState {
@@ -55,7 +55,7 @@ class BaseStateManagerTest {
         }
     }
 
-    class TestStateManager(
+    class TestStore(
         scope: CoroutineScope,
         initialState: TestUiState,
         actionProcessor: ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation>,
@@ -63,7 +63,7 @@ class BaseStateManagerTest {
         private val onGlobalEffect: (suspend (GlobalUiEffect) -> Unit)? = null,
         additionalIntentMiddlewares: List<IntentMiddleware<TestUiState, TestIntent, TestAction>> = emptyList(),
         additionalActionMiddlewares: List<ActionMiddleware<TestUiState, TestAction>> = emptyList(),
-    ) : BaseStateManager<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>(
+    ) : BaseStore<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>(
         scope = scope,
         initialState = initialState,
         actionProcessor = actionProcessor,
@@ -88,16 +88,16 @@ class BaseStateManagerTest {
             secondArg<TestScope>().emitMutation(TestMutation.Mutation1(action.value))
         }
 
-        val stateManager = TestStateManager(
+        val store = TestStore(
             scope = backgroundScope,
             initialState = TestUiState.Initial,
             actionProcessor = actionProcessor,
             reducer = reducer
         )
 
-        stateManager.uiState.test {
+        store.uiState.test {
             assertEquals(TestUiState.Initial, awaitItem())
-            stateManager.dispatchIntent(TestIntent.Intent1("test"))
+            store.dispatchIntent(TestIntent.Intent1("test"))
             assertEquals(TestUiState.Updated("test"), awaitItem())
         }
     }
@@ -110,15 +110,15 @@ class BaseStateManagerTest {
             secondArg<TestScope>().emitUiEffect(TestUiEffect.Effect1("effect"))
         }
 
-        val stateManager = TestStateManager(
+        val store = TestStore(
             scope = backgroundScope,
             initialState = TestUiState.Initial,
             actionProcessor = actionProcessor,
             reducer = reducer
         )
 
-        stateManager.uiEffect.test {
-            stateManager.dispatchAction(TestAction.Action1("test"))
+        store.uiEffect.test {
+            store.dispatchAction(TestAction.Action1("test"))
             assertEquals(TestUiEffect.Effect1("effect"), awaitItem())
         }
     }
@@ -134,7 +134,7 @@ class BaseStateManagerTest {
             secondArg<TestScope>().emitGlobalUiEffect(effect)
         }
 
-        val stateManager = TestStateManager(
+        val store = TestStore(
             scope = backgroundScope,
             initialState = TestUiState.Initial,
             actionProcessor = actionProcessor,
@@ -142,7 +142,7 @@ class BaseStateManagerTest {
             onGlobalEffect = { capturedEffect = it }
         )
 
-        stateManager.dispatchAction(TestAction.Action1("test"))
+        store.dispatchAction(TestAction.Action1("test"))
         delay(50)
 
         assertEquals(effect, capturedEffect)
@@ -166,7 +166,7 @@ class BaseStateManagerTest {
 
         val actionProcessor =
             mockk<ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation>>(relaxed = true)
-        val stateManager = TestStateManager(
+        val store = TestStore(
             scope = backgroundScope,
             initialState = TestUiState.Initial,
             actionProcessor = actionProcessor,
@@ -174,8 +174,8 @@ class BaseStateManagerTest {
             additionalIntentMiddlewares = listOf(middleware)
         )
 
-        stateManager.dispatchIntent(TestIntent.Intent1("1"))
-        stateManager.dispatchIntent(TestIntent.Intent1("2"))
+        store.dispatchIntent(TestIntent.Intent1("1"))
+        store.dispatchIntent(TestIntent.Intent1("2"))
 
         advanceTimeBy(250)
 
@@ -201,7 +201,7 @@ class BaseStateManagerTest {
 
         val actionProcessor =
             mockk<ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation>>(relaxed = true)
-        val stateManager = TestStateManager(
+        val store = TestStore(
             scope = backgroundScope,
             initialState = TestUiState.Initial,
             actionProcessor = actionProcessor,
@@ -209,7 +209,7 @@ class BaseStateManagerTest {
             additionalIntentMiddlewares = listOf(createMiddleware("M1"), createMiddleware("M2"))
         )
 
-        stateManager.dispatchIntent(TestIntent.Intent1("test"))
+        store.dispatchIntent(TestIntent.Intent1("test"))
         delay(50)
 
         // 順序: M1:before -> M2:before -> (Action変換/処理) -> M2:after -> M1:after
@@ -223,13 +223,13 @@ class BaseStateManagerTest {
             object : ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation> {
                 override suspend fun process(
                     action: TestAction,
-                    scope: StateManagerScope<TestUiState, TestUiEffect, TestMutation>
+                    scope: StoreScope<TestUiState, TestUiEffect, TestMutation>
                 ) {
                     logs.add("process:${(action as TestAction.Action1).value}")
                 }
             }
 
-        val stateManager = TestStateManager(
+        val store = TestStore(
             scope = backgroundScope,
             initialState = TestUiState.Initial,
             actionProcessor = actionProcessor,
@@ -237,9 +237,9 @@ class BaseStateManagerTest {
         )
 
         // Parallel戦略でも、dispatchされた順序で内部キューから取り出され処理が開始されることを確認
-        stateManager.dispatchAction(TestAction.Action1("1"))
-        stateManager.dispatchAction(TestAction.Action1("2"))
-        stateManager.dispatchAction(TestAction.Action1("3"))
+        store.dispatchAction(TestAction.Action1("1"))
+        store.dispatchAction(TestAction.Action1("2"))
+        store.dispatchAction(TestAction.Action1("3"))
 
         delay(50)
 
@@ -263,7 +263,7 @@ class BaseStateManagerTest {
 
         val actionProcessor =
             mockk<ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation>>(relaxed = true)
-        val stateManager = TestStateManager(
+        val store = TestStore(
             scope = backgroundScope,
             initialState = TestUiState.Initial,
             actionProcessor = actionProcessor,
@@ -271,7 +271,7 @@ class BaseStateManagerTest {
             additionalActionMiddlewares = listOf(createMiddleware("M1"), createMiddleware("M2"))
         )
 
-        stateManager.dispatchAction(TestAction.Action1("test"))
+        store.dispatchAction(TestAction.Action1("test"))
         delay(50)
 
         // 順序: M1:before -> M2:before -> (Processor処理) -> M2:after -> M1:after
@@ -290,7 +290,7 @@ class BaseStateManagerTest {
             processedValues.add(action.value)
         }
 
-        val stateManager = TestStateManager(
+        val store = TestStore(
             scope = backgroundScope,
             initialState = TestUiState.Initial,
             actionProcessor = actionProcessor,
@@ -298,8 +298,8 @@ class BaseStateManagerTest {
         )
 
         val strategy = ExecutionStrategy.Sequential(DefaultExecutionKey)
-        stateManager.dispatchAction(TestAction.Action1("1", strategy))
-        stateManager.dispatchAction(TestAction.Action1("2", strategy))
+        store.dispatchAction(TestAction.Action1("1", strategy))
+        store.dispatchAction(TestAction.Action1("2", strategy))
 
         advanceTimeBy(250)
 
@@ -318,7 +318,7 @@ class BaseStateManagerTest {
             processedValues.add(action.value)
         }
 
-        val stateManager = TestStateManager(
+        val store = TestStore(
             scope = backgroundScope,
             initialState = TestUiState.Initial,
             actionProcessor = actionProcessor,
@@ -326,9 +326,9 @@ class BaseStateManagerTest {
         )
 
         val strategy = ExecutionStrategy.LatestOnly(DefaultExecutionKey)
-        stateManager.dispatchAction(TestAction.Action1("2", strategy))
+        store.dispatchAction(TestAction.Action1("2", strategy))
         advanceTimeBy(50)
-        stateManager.dispatchAction(TestAction.Action1("1", strategy))
+        store.dispatchAction(TestAction.Action1("1", strategy))
 
         advanceTimeBy(150)
 

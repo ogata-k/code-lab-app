@@ -36,7 +36,7 @@ class HomeViewModelTest {
         val viewModel = HomeViewModel(actionProcessor, mockk())
 
         viewModel.uiState.test {
-            // Initial state from StateManager
+            // Initial state from Store
             assertEquals(HomeUiState.UnInitialized, awaitItem())
 
             // init block calls Initialize action, which has 1s delay

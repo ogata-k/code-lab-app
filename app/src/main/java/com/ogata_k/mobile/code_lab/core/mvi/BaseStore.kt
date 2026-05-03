@@ -21,7 +21,7 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  * Actionの処理と状態更新のパイプラインを管理する基底クラス。
  */
-abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : Action, M : Mutation>(
+abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action, M : Mutation>(
     protected val scope: CoroutineScope,
     initialState: US,
     protected val actionProcessor: ActionProcessor<US, UE, A, M>,
@@ -30,15 +30,14 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     private val globalUiController: GlobalUiController,
     additionalIntentMiddlewares: List<IntentMiddleware<US, I, A>> = emptyList(),
     additionalActionMiddlewares: List<ActionMiddleware<US, A>> = emptyList(),
-) {
+) : Store<US, UE, I, A, M> {
     // --- UI State & Effects ---
-
     protected val _uiState = MutableStateFlow<US>(initialState)
 
     /**
      * UI用の状態。UIはこの状態をもとに表示する。
      */
-    val uiState: StateFlow<US> = _uiState.asStateFlow()
+    override val uiState: StateFlow<US> = _uiState.asStateFlow()
 
     protected val _uiEffect = Channel<UE>(capacity = Channel.BUFFERED)
 
@@ -46,7 +45,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
      * UI用のサイドエフェクト。SharedFlowもいいがナビゲーションにも使うので二重発火をさけるためにもChannelにしている。
      * そのため、複数の画面でcollectするとどれか一つの画面にしか届かないので注意。
      */
-    val uiEffect: Flow<UE> = _uiEffect.receiveAsFlow()
+    override val uiEffect: Flow<UE> = _uiEffect.receiveAsFlow()
 
     // --- Intent Pipeline ---
 
@@ -83,7 +82,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
         ) { middleware, next ->
             { intent ->
                 middleware.process(
-                    { stateManagerScope.getUiStateSnapshot() },
+                    { storeScope.getUiStateSnapshot() },
                     intent,
                     next
                 )
@@ -93,7 +92,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     /**
      * Intentの入口。Channel経由で順次処理される。
      */
-    fun dispatchIntent(intent: I) {
+    override fun dispatchIntent(intent: I) {
         if (intentLoopJob == null) {
             intentLoopJob = scope.launch {
                 for (target in intentChannel) {
@@ -135,8 +134,8 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
      * Actionのミドルウェアのハンドラー。
      * 一覧で宣言された順で呼び出すようにしている。
      */
-    private val actionChain: suspend (A, StateManagerScope<US, UE, M>) -> Unit =
-        actionMiddlewares.foldRight<ActionMiddleware<US, A>, suspend (A, StateManagerScope<US, UE, M>) -> Unit>(
+    private val actionChain: suspend (A, StoreScope<US, UE, M>) -> Unit =
+        actionMiddlewares.foldRight<ActionMiddleware<US, A>, suspend (A, StoreScope<US, UE, M>) -> Unit>(
             initial = { currentAction, scope ->
                 actionProcessor.process(currentAction, scope)
             }
@@ -153,7 +152,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     /**
      * Actionの唯一の入口。
      */
-    fun dispatchAction(action: A) {
+    override fun dispatchAction(action: A) {
         if (actionLoopJob == null) {
             actionLoopJob = scope.launch {
                 for (target in actionChannel) {
@@ -199,7 +198,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
         when (val strategy = action.strategy) {
             ExecutionStrategy.Parallel -> {
                 scope.launch {
-                    runCatchActionBlock { actionChain(action, stateManagerScope) }
+                    runCatchActionBlock { actionChain(action, storeScope) }
                 }
             }
 
@@ -212,7 +211,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
                 sequentialWorkers.getOrPut(key) {
                     scope.launch {
                         for (queuedAction in channel) {
-                            runCatchActionBlock { actionChain(queuedAction, stateManagerScope) }
+                            runCatchActionBlock { actionChain(queuedAction, storeScope) }
                         }
                     }
                 }
@@ -224,30 +223,30 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
                 latestActionJobs[strategy.key]?.cancel()
 
                 val job = scope.launch {
-                    val wrappedScope = object : StateManagerScope<US, UE, M> {
+                    val wrappedStoreScope = object : StoreScope<US, UE, M> {
                         override fun getUiStateSnapshot(): US =
-                            stateManagerScope.getUiStateSnapshot()
+                            storeScope.getUiStateSnapshot()
 
                         override suspend fun emitUiEffect(effect: UE) {
                             // 最新のみ残す戦略では停止状態になっていれば後続の新しいものがあったということなので、
                             // 途中で止める
-                            stateManagerScope.ensureActive()
-                            stateManagerScope.emitUiEffect(effect)
+                            storeScope.ensureActive()
+                            storeScope.emitUiEffect(effect)
                         }
 
                         override suspend fun emitGlobalUiEffect(effect: GlobalUiEffect) {
-                            stateManagerScope.ensureActive()
-                            stateManagerScope.emitGlobalUiEffect(effect)
+                            storeScope.ensureActive()
+                            storeScope.emitGlobalUiEffect(effect)
                         }
 
                         override suspend fun emitMutation(mutation: M) {
                             // 最新のみ残す戦略では停止状態になっていれば後続の新しいものがあったということなので、
                             // 途中で止める
-                            stateManagerScope.ensureActive()
-                            stateManagerScope.emitMutation(mutation)
+                            storeScope.ensureActive()
+                            storeScope.emitMutation(mutation)
                         }
                     }
-                    runCatchActionBlock { actionChain(action, wrappedScope) }
+                    runCatchActionBlock { actionChain(action, wrappedStoreScope) }
                 }
 
                 latestActionJobs[strategy.key] = job
@@ -279,7 +278,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
      * UI Effectを通知する。
      */
     protected suspend fun emitUiEffect(effect: UE) {
-        logV("StateManager") { "emit UiEffect: $effect" }
+        logV("Store") { "emit UiEffect: $effect" }
         _uiEffect.send(effect)
     }
 
@@ -289,7 +288,7 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     protected suspend fun emitMutation(mutation: M) {
         _uiState.update { currentUiState ->
             val nextUiState = reducer.reduce(currentUiState, mutation)
-            logV("StateManager") {
+            logV("Store") {
                 "emit Mutation: $mutation, from UiState: $currentUiState, to UiState: $nextUiState"
             }
             nextUiState
@@ -322,13 +321,13 @@ abstract class BaseStateManager<US : UiState, UE : UiEffect, I : Intent<A>, A : 
     /**
      * ActionProcessorに渡されるスコープの実装。
      */
-    protected val stateManagerScope = object : StateManagerScope<US, UE, M> {
+    protected val storeScope = object : StoreScope<US, UE, M> {
         override fun getUiStateSnapshot(): US = _uiState.value
-        override suspend fun emitUiEffect(effect: UE) = this@BaseStateManager.emitUiEffect(effect)
+        override suspend fun emitUiEffect(effect: UE) = this@BaseStore.emitUiEffect(effect)
         override suspend fun emitGlobalUiEffect(effect: GlobalUiEffect) =
-            this@BaseStateManager.globalUiController.sendUiEffect(effect)
+            this@BaseStore.globalUiController.sendUiEffect(effect)
 
         override suspend fun emitMutation(mutation: M) =
-            this@BaseStateManager.emitMutation(mutation)
+            this@BaseStore.emitMutation(mutation)
     }
 }

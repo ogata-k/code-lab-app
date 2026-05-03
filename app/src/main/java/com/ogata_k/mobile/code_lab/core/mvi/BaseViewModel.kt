@@ -8,9 +8,9 @@ import kotlinx.coroutines.flow.StateFlow
  * featureで利用するViewModelの継承元のモデル
  */
 abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent<A>, A : Action, M : Mutation> :
-    ViewModel(), Store<US, UE, I, A> {
+    ViewModel(), StoreContainer<US, UE, I, A> {
 
-    protected abstract val stateManager: BaseStateManager<US, UE, I, A, M>
+    protected abstract val store: BaseStore<US, UE, I, A, M>
 
     /* initで初期データのロードを行う。例：Action.Initializeという初期化リクエストを発行する
     init {
@@ -21,25 +21,25 @@ abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent<A>, A : Act
 
     override fun onCleared() {
         super.onCleared()
-        stateManager.onCleared()
+        store.onCleared()
     }
 
-    override val uiState: StateFlow<US> get() = stateManager.uiState
+    override val uiState: StateFlow<US> get() = store.uiState
 
     // uiEffectはemitされたUiEffectを流すだけなので合成を使うことは考えられにくいのでデフォルトのまま
-    override val uiEffect: Flow<UE> get() = stateManager.uiEffect
+    override val uiEffect: Flow<UE> get() = store.uiEffect
 
     /**
      * 利用者の明示的な操作のdispatcher
      */
     override fun dispatchIntent(intent: I) {
-        stateManager.dispatchIntent(intent)
+        store.dispatchIntent(intent)
     }
 
     /**
      * Actionのdispatcher。Storeとしては不要だが、ViewModel内で呼び出すActionを直接発火させるときに使う。
      */
     protected fun dispatchAction(action: A) {
-        stateManager.dispatchAction(action)
+        store.dispatchAction(action)
     }
 }

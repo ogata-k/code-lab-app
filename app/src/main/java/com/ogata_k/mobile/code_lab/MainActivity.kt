@@ -87,15 +87,13 @@ fun AppMain(
                 }
 
                 is GlobalUiEffect.ShowToast -> {
-                    launch {
-                        val duration = if (effect.showLong) {
-                            Toast.LENGTH_LONG
-                        } else {
-                            Toast.LENGTH_SHORT
-                        }
-                        val toast = Toast.makeText(context, effect.message, duration)
-                        toast.show()
+                    val duration = if (effect.showLong) {
+                        Toast.LENGTH_LONG
+                    } else {
+                        Toast.LENGTH_SHORT
                     }
+                    val toast = Toast.makeText(context, effect.message, duration)
+                    toast.show()
                 }
 
                 is GlobalUiEffect.ShowErrorDialog,

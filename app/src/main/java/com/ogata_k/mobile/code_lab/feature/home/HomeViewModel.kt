@@ -1,8 +1,8 @@
 package com.ogata_k.mobile.code_lab.feature.home
 
 import androidx.lifecycle.viewModelScope
-import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiController
 import com.ogata_k.mobile.code_lab.core.mvi.BaseViewModel
+import com.ogata_k.mobile.code_lab.global.GlobalUiController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 

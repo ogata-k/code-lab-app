@@ -1,7 +1,5 @@
 package com.ogata_k.mobile.code_lab.global
 
-import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiController
-import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiEffect
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow

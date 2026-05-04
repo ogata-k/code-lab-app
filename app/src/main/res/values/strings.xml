@@ -3,9 +3,13 @@
 
     <!-- ボタン -->
     <string name="btn_close">閉じる</string>
+    <string name="btn_confirm">確認</string>
     <string name="btn_cancel">キャンセル</string>
 
     <!-- ダイアログ -->
     <string name="dialog_title_error">エラー</string>
     <string name="dialog_title_confirm">確認</string>
+
+    <!-- エラーメッセージ -->
+    <string name="error_unexpected">予期せぬエラーが発生しました。</string>
 </resources>

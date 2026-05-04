@@ -29,7 +29,8 @@ class BaseViewModelTest {
 
     @Test
     fun `uiStateがstoreに委譲されていること`() = runTest {
-        val stateFlow = MutableStateFlow<TestUiState>(TestUiState.Initial)
+        val stateFlow =
+            MutableStateFlow<ScreenState<TestUiState>>(ScreenState(featureUiState = TestUiState.Initial))
         val store =
             mockk<BaseStore<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
         coEvery { store.uiState } returns stateFlow.asStateFlow()
@@ -37,7 +38,7 @@ class BaseViewModelTest {
         val viewModel = TestViewModel(store)
 
         viewModel.uiState.test {
-            assertEquals(TestUiState.Initial, awaitItem())
+            assertEquals(ScreenState(featureUiState = TestUiState.Initial), awaitItem())
         }
     }
 

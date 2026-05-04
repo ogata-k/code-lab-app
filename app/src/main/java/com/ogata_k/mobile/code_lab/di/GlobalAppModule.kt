@@ -1,6 +1,6 @@
 package com.ogata_k.mobile.code_lab.di
 
-import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiController
+import com.ogata_k.mobile.code_lab.global.GlobalUiController
 import com.ogata_k.mobile.code_lab.global.GlobalUiControllerImpl
 import dagger.Module
 import dagger.Provides

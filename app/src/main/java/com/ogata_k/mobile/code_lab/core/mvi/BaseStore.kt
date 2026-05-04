@@ -1,10 +1,11 @@
 package com.ogata_k.mobile.code_lab.core.mvi
 
-import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiController
-import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiEffect
 import com.ogata_k.mobile.code_lab.common.logE
 import com.ogata_k.mobile.code_lab.common.logV
 import com.ogata_k.mobile.code_lab.core.mvi.middleware.MviMiddlewareDefaults
+import com.ogata_k.mobile.code_lab.global.GlobalUiController
+import com.ogata_k.mobile.code_lab.global.GlobalUiEffect
+import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -24,7 +25,7 @@ import kotlin.coroutines.cancellation.CancellationException
 abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action, M : Mutation>(
     protected val scope: CoroutineScope,
     initialState: US,
-    protected val actionProcessor: ActionProcessor<US, UE, A, M>,
+    protected val actionProcessor: ActionProcessor<US, UE, I, A, M>,
     // ここでReducerを渡すことでreducer自体はSとMからしか計算できない純粋関数みたいなものであることを保証する
     private val reducer: Reducer<US, M>,
     private val globalUiController: GlobalUiController,
@@ -32,12 +33,12 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
     additionalActionMiddlewares: List<ActionMiddleware<US, A>> = emptyList(),
 ) : Store<US, UE, I, A, M> {
     // --- UI State & Effects ---
-    protected val _uiState = MutableStateFlow<US>(initialState)
+    protected val _uiState = MutableStateFlow(ScreenState(featureUiState = initialState))
 
     /**
-     * UI用の状態。UIはこの状態をもとに表示する。
+     * UI用の状態。
      */
-    override val uiState: StateFlow<US> = _uiState.asStateFlow()
+    override val uiState: StateFlow<ScreenState<US>> = _uiState.asStateFlow()
 
     protected val _uiEffect = Channel<UE>(capacity = Channel.BUFFERED)
 
@@ -46,6 +47,13 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
      * そのため、複数の画面でcollectするとどれか一つの画面にしか届かないので注意。
      */
     override val uiEffect: Flow<UE> = _uiEffect.receiveAsFlow()
+
+    protected val _commonUiEffect = Channel<CommonUiEffect>(capacity = Channel.BUFFERED)
+
+    /**
+     * 共通のサイドエフェクト。
+     */
+    override val commonUiEffect: Flow<CommonUiEffect> = _commonUiEffect.receiveAsFlow()
 
     // --- Intent Pipeline ---
 
@@ -134,8 +142,8 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
      * Actionのミドルウェアのハンドラー。
      * 一覧で宣言された順で呼び出すようにしている。
      */
-    private val actionChain: suspend (A, StoreScope<US, UE, M>) -> Unit =
-        actionMiddlewares.foldRight<ActionMiddleware<US, A>, suspend (A, StoreScope<US, UE, M>) -> Unit>(
+    private val actionChain: suspend (A, StoreScope<US, UE, I, A, M>) -> Unit =
+        actionMiddlewares.foldRight<ActionMiddleware<US, A>, suspend (A, StoreScope<US, UE, I, A, M>) -> Unit>(
             initial = { currentAction, scope ->
                 actionProcessor.process(currentAction, scope)
             }
@@ -223,15 +231,21 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
                 latestActionJobs[strategy.key]?.cancel()
 
                 val job = scope.launch {
-                    val wrappedStoreScope = object : StoreScope<US, UE, M> {
+                    val wrappedStoreScope = object : StoreScope<US, UE, I, A, M> {
                         override fun getUiStateSnapshot(): US =
                             storeScope.getUiStateSnapshot()
 
+                        override fun getScreenStateSnapshot(): ScreenState<US> =
+                            storeScope.getScreenStateSnapshot()
+
                         override suspend fun emitUiEffect(effect: UE) {
-                            // 最新のみ残す戦略では停止状態になっていれば後続の新しいものがあったということなので、
-                            // 途中で止める
                             storeScope.ensureActive()
                             storeScope.emitUiEffect(effect)
+                        }
+
+                        override suspend fun emitCommonUiEffect(effect: CommonUiEffect) {
+                            storeScope.ensureActive()
+                            storeScope.emitCommonUiEffect(effect)
                         }
 
                         override suspend fun emitGlobalUiEffect(effect: GlobalUiEffect) {
@@ -240,10 +254,17 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
                         }
 
                         override suspend fun emitMutation(mutation: M) {
-                            // 最新のみ残す戦略では停止状態になっていれば後続の新しいものがあったということなので、
-                            // 途中で止める
                             storeScope.ensureActive()
                             storeScope.emitMutation(mutation)
+                        }
+
+                        override suspend fun emitCommonMutation(mutation: CommonMutation) {
+                            storeScope.ensureActive()
+                            storeScope.emitCommonMutation(mutation)
+                        }
+
+                        override fun dispatchIntent(intent: I) {
+                            storeScope.dispatchIntent(intent)
                         }
                     }
                     runCatchActionBlock { actionChain(action, wrappedStoreScope) }
@@ -283,15 +304,54 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
     }
 
     /**
+     * 共通のUI Effectを通知する。
+     */
+    protected suspend fun emitCommonUiEffect(effect: CommonUiEffect) {
+        logV("Store") { "emit CommonUiEffect: $effect" }
+        _commonUiEffect.send(effect)
+    }
+
+    /**
      * Mutationを適用し、UI Stateを更新する。
      */
     protected suspend fun emitMutation(mutation: M) {
-        _uiState.update { currentUiState ->
-            val nextUiState = reducer.reduce(currentUiState, mutation)
+        _uiState.update { currentScreenState ->
+            val nextFeatureState = reducer.reduce(currentScreenState.featureUiState, mutation)
             logV("Store") {
-                "emit Mutation: $mutation, from UiState: $currentUiState, to UiState: $nextUiState"
+                "emit Mutation: $mutation, from UiState: ${currentScreenState.featureUiState}, to UiState: $nextFeatureState"
             }
-            nextUiState
+            currentScreenState.copy(featureUiState = nextFeatureState)
+        }
+    }
+
+    /**
+     * 共通のMutationを適用する。
+     */
+    protected suspend fun emitCommonMutation(mutation: CommonMutation) {
+        logV("Store") { "emit CommonMutation: $mutation" }
+        _uiState.update { currentScreenState ->
+            val nextScreenState = when (mutation) {
+                is CommonMutation.AddDialog -> {
+                    currentScreenState.copy(localDialogQueue = currentScreenState.localDialogQueue + mutation.data)
+                }
+
+                is CommonMutation.RemoveDialog -> {
+                    currentScreenState.copy(localDialogQueue = currentScreenState.localDialogQueue - mutation.data)
+                }
+            }
+            logV("Store") {
+                "emit CommonMutation: $mutation, from ScreenState: $currentScreenState, to ScreenState: $nextScreenState"
+            }
+            nextScreenState
+        }
+    }
+
+    /**
+     * ダイアログをキューから削除する
+     */
+    fun removeDialog(dialog: CommonDialogData) {
+        scope.launch {
+            emitCommonMutation(CommonMutation.RemoveDialog(dialog))
         }
     }
 
@@ -304,6 +364,8 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
     fun onCleared() {
         intentChannel.close()
         actionChannel.close()
+        _uiEffect.close()
+        _commonUiEffect.close()
         sequentialChannels.values.forEach { it.close() }
 
         intentLoopJob?.cancel()
@@ -321,13 +383,21 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
     /**
      * ActionProcessorに渡されるスコープの実装。
      */
-    protected val storeScope = object : StoreScope<US, UE, M> {
-        override fun getUiStateSnapshot(): US = _uiState.value
+    protected val storeScope = object : StoreScope<US, UE, I, A, M> {
+        override fun getUiStateSnapshot(): US = _uiState.value.featureUiState
+        override fun getScreenStateSnapshot(): ScreenState<US> = _uiState.value
         override suspend fun emitUiEffect(effect: UE) = this@BaseStore.emitUiEffect(effect)
+        override suspend fun emitCommonUiEffect(effect: CommonUiEffect) =
+            this@BaseStore.emitCommonUiEffect(effect)
         override suspend fun emitGlobalUiEffect(effect: GlobalUiEffect) =
             this@BaseStore.globalUiController.sendUiEffect(effect)
 
         override suspend fun emitMutation(mutation: M) =
             this@BaseStore.emitMutation(mutation)
+
+        override suspend fun emitCommonMutation(mutation: CommonMutation) =
+            this@BaseStore.emitCommonMutation(mutation)
+
+        override fun dispatchIntent(intent: I) = this@BaseStore.dispatchIntent(intent)
     }
 }

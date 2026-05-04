@@ -93,7 +93,7 @@ tasks.register("generateFeature") {
                 /**
                  * ${featureName} featureの状態を変更するための変更内容
                  */
-                sealed interface ${featureName}Mutation : Mutation{
+                sealed interface ${featureName}Mutation : Mutation {
                     // TODO: 本来のMutationに書き換える
                     data object ToInitialized : ${featureName}Mutation
                 }
@@ -109,10 +109,10 @@ tasks.register("generateFeature") {
                 /**
                  * ${featureName} featureのアクションを処理し、ミューテーションを生成するクラス
                  */
-                class ${featureName}ActionProcessor @Inject constructor() : ActionProcessor<${featureName}UiState, ${featureName}UiEffect, ${featureName}Action, ${featureName}Mutation> {
+                class ${featureName}ActionProcessor @Inject constructor() : ActionProcessor<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation> {
                     override suspend fun process(
                         action: ${featureName}Action,
-                        scope: StoreScope<${featureName}UiState, ${featureName}UiEffect, ${featureName}Mutation>
+                        scope: StoreScope<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>
                     ) {
                         when (action) {
                             is ${featureName}Action.Initialize -> {
@@ -148,7 +148,7 @@ tasks.register("generateFeature") {
             "${featureName}Store.kt" to """
                 package $packageName
                 
-                import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiController
+                import com.ogata_k.mobile.code_lab.global.GlobalUiController
                 import com.ogata_k.mobile.code_lab.core.mvi.BaseStore
                 import kotlinx.coroutines.CoroutineScope
                 
@@ -174,7 +174,7 @@ tasks.register("generateFeature") {
                 package $packageName
                 
                 import androidx.lifecycle.viewModelScope
-                import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiController
+                import com.ogata_k.mobile.code_lab.global.GlobalUiController
                 import com.ogata_k.mobile.code_lab.core.mvi.BaseViewModel
                 import dagger.hilt.android.lifecycle.HiltViewModel
                 import javax.inject.Inject
@@ -206,13 +206,10 @@ tasks.register("generateFeature") {
                 package $packageName
                 
                 import androidx.compose.runtime.Composable
-                import androidx.compose.runtime.LaunchedEffect
                 import androidx.compose.runtime.getValue
                 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-                import androidx.lifecycle.Lifecycle
-                import androidx.lifecycle.compose.LocalLifecycleOwner
                 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-                import androidx.lifecycle.repeatOnLifecycle
+                import com.ogata_k.mobile.code_lab.ui.widget.screen.AdaptiveRouteHost
                 
                 /**
                  * ${featureName} featureのナビゲーションルートとなるComposable関数
@@ -223,20 +220,17 @@ tasks.register("generateFeature") {
                 ) {
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                     
-                    val lifecycle = LocalLifecycleOwner.current
-                    
-                    LaunchedEffect(viewModel.uiEffect, lifecycle) {
-                        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                            viewModel.uiEffect.collect { effect ->
-                                // TODO: Handle effect
-                            }
-                        }
+                    AdaptiveRouteHost(
+                        storeContainer = viewModel,
+                        onHandleUiEffect = { effect, snackbarHostState, context, scope ->
+                            // TODO: Handle effect
+                        },
+                    ) {
+                        ${featureName}Screen(
+                            uiState = uiState.featureUiState,
+                            onIntent = { viewModel.dispatchIntent(it) }
+                        )
                     }
-
-                    ${featureName}Screen(
-                        uiState = uiState,
-                        onIntent = { viewModel.dispatchIntent(it) }
-                    )
                 }
             """.trimIndent(),
 
@@ -316,6 +310,7 @@ tasks.register("generateFeature") {
                 package $packageName
                 
                 import app.cash.turbine.test
+                import com.ogata_k.mobile.code_lab.core.mvi.ScreenState
                 import io.mockk.mockk
                 import kotlinx.coroutines.ExperimentalCoroutinesApi
                 import kotlinx.coroutines.test.advanceUntilIdle
@@ -339,7 +334,7 @@ tasks.register("generateFeature") {
                             globalUiController = mockk()
                         )
                 
-                        assertEquals(${featureName}UiState.UnInitialized, store.uiState.value)
+                        assertEquals(ScreenState(featureUiState = ${featureName}UiState.UnInitialized), store.uiState.value)
                     }
                 
                     @Test
@@ -354,12 +349,12 @@ tasks.register("generateFeature") {
                         )
                 
                         store.uiState.test {
-                            assertEquals(${featureName}UiState.UnInitialized, awaitItem())
+                            assertEquals(ScreenState(featureUiState = ${featureName}UiState.UnInitialized), awaitItem())
                 
                             store.dispatchAction(${featureName}Action.Initialize)
                 
                             advanceUntilIdle()
-                            assertEquals(${featureName}UiState.Initialized, awaitItem())
+                            assertEquals(ScreenState(featureUiState = ${featureName}UiState.Initialized), awaitItem())
                         }
                     }
                 }
@@ -369,6 +364,7 @@ tasks.register("generateFeature") {
                 package $packageName
                 
                 import app.cash.turbine.test
+                import com.ogata_k.mobile.code_lab.core.mvi.ScreenState
                 import io.mockk.mockk
                 import kotlinx.coroutines.Dispatchers
                 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -406,13 +402,13 @@ tasks.register("generateFeature") {
 
                         viewModel.uiState.test {
                             // 初期状態がUnInitializedであることを確認
-                            assertEquals(${featureName}UiState.UnInitialized, awaitItem())
+                            assertEquals(ScreenState(featureUiState = ${featureName}UiState.UnInitialized), awaitItem())
 
                             // Initializeアクションが完了するまで待機
                             advanceUntilIdle()
 
                             // viewModel.init内でInitializeアクションが呼ばれる想定
-                            assertEquals(${featureName}UiState.Initialized, awaitItem())
+                            assertEquals(ScreenState(featureUiState = ${featureName}UiState.Initialized), awaitItem())
                         }
                     }
                 }

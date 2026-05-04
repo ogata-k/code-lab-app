@@ -1,7 +1,9 @@
 package com.ogata_k.mobile.code_lab.core.mvi
 
 import com.ogata_k.mobile.code_lab.common.BuildConfig
-import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiEffect
+import com.ogata_k.mobile.code_lab.global.GlobalUiEffect
+import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
+import com.ogata_k.mobile.code_lab.ui.widget.snackbar.CommonSnackbarData
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -13,9 +15,31 @@ import kotlinx.coroutines.flow.StateFlow
 interface UiState
 
 /**
+ * すべての画面で共通のUI状態を管理する器
+ */
+data class ScreenState<US : UiState>(
+    val featureUiState: US,
+    val localDialogQueue: List<CommonDialogData> = emptyList(),
+) {
+    /**
+     * 共通のローカルダイアログが表示中ならtrue
+     */
+    fun isInShowLocalDialogQueue(): Boolean {
+        return !localDialogQueue.isEmpty()
+    }
+}
+
+/**
  * UI状態の更新から見たときの副作用のマーカーインターフェース
  */
 interface UiEffect
+
+/**
+ * 共通で利用するミューテーション
+ */
+sealed interface CommonUiEffect : UiEffect {
+    data class ShowSnackbar(val data: CommonSnackbarData) : CommonUiEffect
+}
 
 /**
  * ユーザー操作イベントのマーカーインターフェース
@@ -86,6 +110,14 @@ interface Action {
  * UI状態を更新するミューテーションのマーカーインターフェース
  */
 interface Mutation
+
+/**
+ * 共通で利用するミューテーション
+ */
+sealed interface CommonMutation : Mutation {
+    data class AddDialog(val data: CommonDialogData) : CommonMutation
+    data class RemoveDialog(val data: CommonDialogData) : CommonMutation
+}
 
 /**
  * Intentを処理する前に実行したい処理、つまり利用者のUI操作用のミドルウェア。
@@ -165,21 +197,25 @@ interface ActionMiddleware<US : UiState, A : Action> {
  * Store内でアクションの実際の処理を提供するプロセッサーのマーカーインターフェース。
  * UseCaseをハンドリングするInteractorのようなものとなる。
  */
-interface ActionProcessor<US : UiState, UE : UiEffect, A : Action, M : Mutation> {
-    suspend fun process(action: A, scope: StoreScope<US, UE, M>)
+interface ActionProcessor<US : UiState, UE : UiEffect, I : Intent<A>, A : Action, M : Mutation> {
+    suspend fun process(action: A, scope: StoreScope<US, UE, I, A, M>)
 }
 
 interface Store<US : UiState, UE : UiEffect, I : Intent<A>, A : Action, M : Mutation> {
     /**
-     * UI用の状態。UIはこの状態をもとに表示する。
+     * UI用の状態。
      */
-    val uiState: StateFlow<US>
+    val uiState: StateFlow<ScreenState<US>>
 
     /**
-     * UI用のサイドエフェクト。SharedFlowもいいがナビゲーションにも使うので二重発火をさけるためにもChannelにしている。
-     * そのため、複数の画面でcollectするとどれか一つの画面にしか届かないので注意。
+     * UI用のサイドエフェクト。
      */
     val uiEffect: Flow<UE>
+
+    /**
+     * UI用の共通サイドエフェクト。
+     */
+    val commonUiEffect: Flow<CommonUiEffect>
 
     /**
      * Intentを発火
@@ -195,8 +231,10 @@ interface Store<US : UiState, UE : UiEffect, I : Intent<A>, A : Action, M : Muta
 /**
  * Store内での処理に必要な機能をまとめたインターフェース
  */
-interface StoreScope<US : UiState, UE : UiEffect, M : Mutation> {
+interface StoreScope<US : UiState, UE : UiEffect, I : Intent<A>, A : Action, M : Mutation> {
     fun getUiStateSnapshot(): US
+
+    fun getScreenStateSnapshot(): ScreenState<US>
 
     suspend fun ensureActive() {
         currentCoroutineContext().ensureActive()
@@ -204,9 +242,15 @@ interface StoreScope<US : UiState, UE : UiEffect, M : Mutation> {
 
     suspend fun emitUiEffect(effect: UE)
 
+    suspend fun emitCommonUiEffect(effect: CommonUiEffect)
+
     suspend fun emitGlobalUiEffect(effect: GlobalUiEffect)
 
     suspend fun emitMutation(mutation: M)
+
+    suspend fun emitCommonMutation(mutation: CommonMutation)
+
+    fun dispatchIntent(intent: I)
 }
 
 /**
@@ -226,18 +270,27 @@ interface Reducer<US : UiState, M : Mutation> {
  */
 interface StoreContainer<US : UiState, UE : UiEffect, I : Intent<A>, A : Action> {
     /**
-     * UI用の状態。UIはこの状態をもとに表示する。
+     * UI用の状態。
      */
-    val uiState: StateFlow<US>
+    val uiState: StateFlow<ScreenState<US>>
 
     /**
-     * UI用のサイドエフェクト。SharedFlowもいいがナビゲーションにも使うので二重発火をさけるためにもChannelにしている。
-     * そのため、複数の画面でcollectするとどれか一つの画面にしか届かないので注意。
+     * UI用のサイドエフェクト。
      */
     val uiEffect: Flow<UE>
+
+    /**
+     * UI用のサイドエフェクト。
+     */
+    val commonUiEffect: Flow<CommonUiEffect>
 
     /**
      * 利用者の明示的な操作のdispatcher
      */
     fun dispatchIntent(intent: I)
+
+    /**
+     * ダイアログを削除
+     */
+    fun removeLocalDialog(dialog: CommonDialogData)
 }

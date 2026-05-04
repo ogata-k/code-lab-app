@@ -1,6 +1,9 @@
 package com.ogata_k.mobile.code_lab.feature.home
 
 import app.cash.turbine.test
+import com.ogata_k.mobile.code_lab.core.mvi.CommonUiEffect
+import com.ogata_k.mobile.code_lab.core.mvi.ScreenState
+import com.ogata_k.mobile.code_lab.ui.widget.snackbar.CommonSnackbarMessage
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceTimeBy
@@ -21,7 +24,7 @@ class HomeStoreTest {
             globalUiController = mockk()
         )
 
-        assertEquals(HomeUiState.UnInitialized, store.uiState.value)
+        assertEquals(ScreenState(featureUiState = HomeUiState.UnInitialized), store.uiState.value)
     }
 
     @Test
@@ -36,12 +39,17 @@ class HomeStoreTest {
         )
 
         store.uiState.test {
-            assertEquals(HomeUiState.UnInitialized, awaitItem())
+            assertEquals(ScreenState(featureUiState = HomeUiState.UnInitialized), awaitItem())
 
             store.dispatchAction(HomeAction.Initialize)
 
             advanceTimeBy(1001)
-            assertEquals(HomeUiState.Initialized, awaitItem())
+            // 1. ToInitialized によって featureUiState が更新される
+            assertEquals(ScreenState(featureUiState = HomeUiState.Initialized), awaitItem())
+            // 2. AddDialog によって localDialogQueue が更新される
+            val finalState = awaitItem()
+            assertEquals(HomeUiState.Initialized, finalState.featureUiState)
+            assert(finalState.localDialogQueue.isNotEmpty())
         }
     }
 
@@ -56,11 +64,16 @@ class HomeStoreTest {
             globalUiController = mockk()
         )
 
-        store.uiEffect.test {
+        store.commonUiEffect.test {
             store.dispatchAction(HomeAction.Initialize)
 
             advanceTimeBy(1001)
-            assertEquals(HomeUiEffect.ShowInitializedSnackbar, awaitItem())
+            val effect = awaitItem()
+            assert(effect is CommonUiEffect.ShowSnackbar)
+            assertEquals(
+                CommonSnackbarMessage.Initialized,
+                (effect as CommonUiEffect.ShowSnackbar).data.message
+            )
         }
     }
 }

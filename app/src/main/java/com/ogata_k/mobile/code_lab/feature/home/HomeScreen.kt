@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -23,12 +21,11 @@ import com.ogata_k.mobile.code_lab.ui.widget.screen.ScreenContainer
 fun HomeScreen(
     uiState: HomeUiState,
     onIntent: (HomeIntent) -> Unit,
-    snackbarHostState: SnackbarHostState,
 ) {
     ScreenContainer {
+        // TODO: ListDetailPaneScaffoldで一覧として利用可能なテンプレート一覧、詳細としてテンプレートごとの作成画面みたくする。各テンプレートで作られたアイテムごとに実験場を用意する。
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { innerPadding ->
             Box(
                 Modifier

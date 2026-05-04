@@ -1,9 +1,12 @@
 package com.ogata_k.mobile.code_lab.core.mvi
 
 import app.cash.turbine.test
-import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiController
-import com.ogata_k.mobile.code_lab.common.global_ui.GlobalUiEffect
+import com.ogata_k.mobile.code_lab.global.GlobalUiController
+import com.ogata_k.mobile.code_lab.global.GlobalUiEffect
+import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
+import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogMessage
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -13,9 +16,10 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
-private typealias TestScope = StoreScope<BaseStoreTest.TestUiState, BaseStoreTest.TestUiEffect, BaseStoreTest.TestMutation>
+private typealias TestScope = StoreScope<BaseStoreTest.TestUiState, BaseStoreTest.TestUiEffect, BaseStoreTest.TestIntent, BaseStoreTest.TestAction, BaseStoreTest.TestMutation>
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BaseStoreTest {
@@ -41,6 +45,10 @@ class BaseStoreTest {
         data class Intent1(val value: String) : TestIntent {
             override fun toAction(): TestAction = TestAction.Action1(value)
         }
+
+        data object NullActionIntent : TestIntent {
+            override fun toAction(): TestAction? = null
+        }
     }
 
     sealed interface TestMutation : Mutation {
@@ -58,7 +66,7 @@ class BaseStoreTest {
     class TestStore(
         scope: CoroutineScope,
         initialState: TestUiState,
-        actionProcessor: ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation>,
+        actionProcessor: ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>,
         reducer: Reducer<TestUiState, TestMutation>,
         private val onGlobalEffect: (suspend (GlobalUiEffect) -> Unit)? = null,
         additionalIntentMiddlewares: List<IntentMiddleware<TestUiState, TestIntent, TestAction>> = emptyList(),
@@ -82,7 +90,7 @@ class BaseStoreTest {
     @Test
     fun `dispatchIntentによって最終的にuiStateが更新されること`() = runTest {
         val actionProcessor =
-            mockk<ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation>>()
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
         coEvery { actionProcessor.process(any(), any()) } coAnswers {
             val action = firstArg<TestAction.Action1>()
             secondArg<TestScope>().emitMutation(TestMutation.Mutation1(action.value))
@@ -96,16 +104,16 @@ class BaseStoreTest {
         )
 
         store.uiState.test {
-            assertEquals(TestUiState.Initial, awaitItem())
+            assertEquals(ScreenState(featureUiState = TestUiState.Initial), awaitItem())
             store.dispatchIntent(TestIntent.Intent1("test"))
-            assertEquals(TestUiState.Updated("test"), awaitItem())
+            assertEquals(ScreenState(featureUiState = TestUiState.Updated("test")), awaitItem())
         }
     }
 
     @Test
     fun `emitUiEffectによってuiEffectフローが通知されること`() = runTest {
         val actionProcessor =
-            mockk<ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation>>()
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
         coEvery { actionProcessor.process(any(), any()) } coAnswers {
             secondArg<TestScope>().emitUiEffect(TestUiEffect.Effect1("effect"))
         }
@@ -126,7 +134,7 @@ class BaseStoreTest {
     @Test
     fun `emitGlobalEffectによってGlobalUiControllerに通知されること`() = runTest {
         val actionProcessor =
-            mockk<ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation>>()
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
         val effect = mockk<GlobalUiEffect>()
         var capturedEffect: GlobalUiEffect? = null
 
@@ -165,7 +173,9 @@ class BaseStoreTest {
         }
 
         val actionProcessor =
-            mockk<ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation>>(relaxed = true)
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>(
+                relaxed = true
+            )
         val store = TestStore(
             scope = backgroundScope,
             initialState = TestUiState.Initial,
@@ -200,7 +210,9 @@ class BaseStoreTest {
             }
 
         val actionProcessor =
-            mockk<ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation>>(relaxed = true)
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>(
+                relaxed = true
+            )
         val store = TestStore(
             scope = backgroundScope,
             initialState = TestUiState.Initial,
@@ -220,10 +232,11 @@ class BaseStoreTest {
     fun `Actionが直列にdispatchされること`() = runTest {
         val logs = mutableListOf<String>()
         val actionProcessor =
-            object : ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation> {
+            object :
+                ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation> {
                 override suspend fun process(
                     action: TestAction,
-                    scope: StoreScope<TestUiState, TestUiEffect, TestMutation>
+                    scope: StoreScope<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>
                 ) {
                     logs.add("process:${(action as TestAction.Action1).value}")
                 }
@@ -262,7 +275,9 @@ class BaseStoreTest {
         }
 
         val actionProcessor =
-            mockk<ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation>>(relaxed = true)
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>(
+                relaxed = true
+            )
         val store = TestStore(
             scope = backgroundScope,
             initialState = TestUiState.Initial,
@@ -281,7 +296,7 @@ class BaseStoreTest {
     @Test
     fun `Sequential戦略でActionが一つずつ順番に処理されること`() = runTest {
         val actionProcessor =
-            mockk<ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation>>()
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
         val processedValues = mutableListOf<String>()
 
         coEvery { actionProcessor.process(any(), any()) } coAnswers {
@@ -309,7 +324,7 @@ class BaseStoreTest {
     @Test
     fun `LatestOnly戦略で前のActionがキャンセルされ最新のみが実行されること`() = runTest {
         val actionProcessor =
-            mockk<ActionProcessor<TestUiState, TestUiEffect, TestAction, TestMutation>>()
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
         val processedValues = mutableListOf<String>()
 
         coEvery { actionProcessor.process(any(), any()) } coAnswers {
@@ -333,5 +348,179 @@ class BaseStoreTest {
         advanceTimeBy(150)
 
         assertEquals(listOf("1"), processedValues)
+    }
+
+    @Test
+    fun `emitCommonMutationによってlocalDialogQueueが更新されること`() = runTest {
+        val actionProcessor =
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
+        val dialogData = CommonDialogData.ShowConfirmDialog(CommonDialogMessage.Initialized) {}
+
+        coEvery { actionProcessor.process(any(), any()) } coAnswers {
+            secondArg<TestScope>().emitCommonMutation(CommonMutation.AddDialog(dialogData))
+        }
+
+        val store = TestStore(
+            scope = backgroundScope,
+            initialState = TestUiState.Initial,
+            actionProcessor = actionProcessor,
+            reducer = reducer
+        )
+
+        store.uiState.test {
+            assertEquals(0, awaitItem().localDialogQueue.size)
+            store.dispatchAction(TestAction.Action1("test"))
+            val stateWithDialog = awaitItem()
+            assertEquals(1, stateWithDialog.localDialogQueue.size)
+            assertEquals(dialogData, stateWithDialog.localDialogQueue[0])
+        }
+    }
+
+    @Test
+    fun `removeDialogによってlocalDialogQueueからダイアログが削除されること`() = runTest {
+        val actionProcessor =
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
+        val dialogData = CommonDialogData.ShowConfirmDialog(CommonDialogMessage.Initialized) {}
+
+        // 最初にダイアログを追加するアクション
+        coEvery { actionProcessor.process(any(), any()) } coAnswers {
+            secondArg<TestScope>().emitCommonMutation(CommonMutation.AddDialog(dialogData))
+        }
+
+        val store = TestStore(
+            scope = backgroundScope,
+            initialState = TestUiState.Initial,
+            actionProcessor = actionProcessor,
+            reducer = reducer
+        )
+
+        store.uiState.test {
+            // 初期状態
+            assertEquals(0, awaitItem().localDialogQueue.size)
+
+            // ダイアログ追加
+            store.dispatchAction(TestAction.Action1("add"))
+            val stateWithDialog = awaitItem()
+            assertEquals(1, stateWithDialog.localDialogQueue.size)
+
+            // ダイアログ削除
+            store.removeDialog(dialogData)
+            val stateEmpty = awaitItem()
+            assertEquals(0, stateEmpty.localDialogQueue.size)
+        }
+    }
+
+    @Test
+    fun `toActionがnullを返すIntentは無視されること`() = runTest {
+        val actionProcessor =
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>(
+                relaxed = true
+            )
+        val store = TestStore(
+            scope = backgroundScope,
+            initialState = TestUiState.Initial,
+            actionProcessor = actionProcessor,
+            reducer = reducer
+        )
+
+        store.dispatchIntent(TestIntent.NullActionIntent)
+        delay(50)
+
+        coVerify(exactly = 0) { actionProcessor.process(any(), any()) }
+    }
+
+    @Test
+    fun `StoreScopeのSnapshotが最新の状態を返すこと`() = runTest {
+        val actionProcessor =
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
+        var capturedUiState: TestUiState? = null
+        var capturedScreenState: ScreenState<TestUiState>? = null
+
+        coEvery { actionProcessor.process(any(), any()) } coAnswers {
+            val scope = secondArg<TestScope>()
+            capturedUiState = scope.getUiStateSnapshot()
+            capturedScreenState = scope.getScreenStateSnapshot()
+        }
+
+        val store = TestStore(
+            scope = backgroundScope,
+            initialState = TestUiState.Initial,
+            actionProcessor = actionProcessor,
+            reducer = reducer
+        )
+
+        store.dispatchAction(TestAction.Action1("test"))
+        delay(50)
+
+        assertEquals(TestUiState.Initial, capturedUiState)
+        assertEquals(ScreenState(featureUiState = TestUiState.Initial), capturedScreenState)
+    }
+
+    @Test
+    fun `onClearedによってSequentialWorkerがキャンセルされること`() = runTest {
+        val actionProcessor =
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
+        var actionStarted = false
+        var actionCancelled = false
+
+        coEvery { actionProcessor.process(any(), any()) } coAnswers {
+            actionStarted = true
+            try {
+                delay(1000)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                actionCancelled = true
+                throw e
+            }
+        }
+
+        val store = TestStore(
+            scope = backgroundScope,
+            initialState = TestUiState.Initial,
+            actionProcessor = actionProcessor,
+            reducer = reducer
+        )
+
+        store.dispatchAction(
+            TestAction.Action1(
+                "test",
+                ExecutionStrategy.Sequential(DefaultExecutionKey)
+            )
+        )
+        delay(50)
+        assertTrue(actionStarted)
+
+        store.onCleared()
+        delay(50)
+        assertTrue(actionCancelled)
+    }
+
+    @Test
+    fun `Actionが例外を投げても後続のActionが処理されること`() = runTest {
+        val actionProcessor =
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
+        val logs = mutableListOf<String>()
+
+        coEvery { actionProcessor.process(any(), any()) } coAnswers {
+            val action = it.invocation.args[0] as TestAction.Action1
+            if (action.value == "error") {
+                throw RuntimeException("test error")
+            }
+            logs.add(action.value)
+        }
+
+        val store = TestStore(
+            scope = backgroundScope,
+            initialState = TestUiState.Initial,
+            actionProcessor = actionProcessor,
+            reducer = reducer
+        )
+
+        store.dispatchAction(TestAction.Action1("1"))
+        store.dispatchAction(TestAction.Action1("error"))
+        store.dispatchAction(TestAction.Action1("2"))
+
+        delay(100)
+
+        assertEquals(listOf("1", "2"), logs)
     }
 }

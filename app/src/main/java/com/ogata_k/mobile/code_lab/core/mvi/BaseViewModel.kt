@@ -1,6 +1,7 @@
 package com.ogata_k.mobile.code_lab.core.mvi
 
 import androidx.lifecycle.ViewModel
+import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -12,22 +13,20 @@ abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent<A>, A : Act
 
     protected abstract val store: BaseStore<US, UE, I, A, M>
 
-    /* initで初期データのロードを行う。例：Action.Initializeという初期化リクエストを発行する
-    init {
-        // 初期データのロード
-        dispatchAction(${featureName}Action.Initialize())
-    }
-    */
-
     override fun onCleared() {
         super.onCleared()
         store.onCleared()
     }
 
-    override val uiState: StateFlow<US> get() = store.uiState
+    override val uiState: StateFlow<ScreenState<US>> get() = store.uiState
 
-    // uiEffectはemitされたUiEffectを流すだけなので合成を使うことは考えられにくいのでデフォルトのまま
     override val uiEffect: Flow<UE> get() = store.uiEffect
+
+    override val commonUiEffect: Flow<CommonUiEffect> get() = store.commonUiEffect
+
+    override fun removeLocalDialog(dialog: CommonDialogData) {
+        store.removeDialog(dialog)
+    }
 
     /**
      * 利用者の明示的な操作のdispatcher

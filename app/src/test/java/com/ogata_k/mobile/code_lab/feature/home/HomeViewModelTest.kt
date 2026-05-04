@@ -1,6 +1,9 @@
 package com.ogata_k.mobile.code_lab.feature.home
 
 import app.cash.turbine.test
+import com.ogata_k.mobile.code_lab.core.mvi.CommonUiEffect
+import com.ogata_k.mobile.code_lab.core.mvi.ScreenState
+import com.ogata_k.mobile.code_lab.ui.widget.snackbar.CommonSnackbarMessage
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -37,23 +40,55 @@ class HomeViewModelTest {
 
         viewModel.uiState.test {
             // Initial state from Store
-            assertEquals(HomeUiState.UnInitialized, awaitItem())
+            assertEquals(ScreenState(featureUiState = HomeUiState.UnInitialized), awaitItem())
 
             // init block calls Initialize action, which has 1s delay
             advanceTimeBy(1001)
 
-            assertEquals(HomeUiState.Initialized, awaitItem())
+            // 1. ToInitialized によって featureUiState が更新される
+            assertEquals(ScreenState(featureUiState = HomeUiState.Initialized), awaitItem())
+            // 2. AddDialog によって localDialogQueue が更新される
+            val finalState = awaitItem()
+            assertEquals(HomeUiState.Initialized, finalState.featureUiState)
+            assert(finalState.localDialogQueue.isNotEmpty())
         }
     }
 
     @Test
-    fun `初期化時にShowInitializedSnackbarエフェクトが発行されること`() = runTest {
+    fun `初期化時にShowSnackbarエフェクトが発行されること`() = runTest {
         val actionProcessor = HomeActionProcessor()
         val viewModel = HomeViewModel(actionProcessor, mockk())
 
-        viewModel.uiEffect.test {
+        viewModel.commonUiEffect.test {
             advanceTimeBy(1001)
-            assertEquals(HomeUiEffect.ShowInitializedSnackbar, awaitItem())
+            val effect = awaitItem()
+            assert(effect is CommonUiEffect.ShowSnackbar)
+            assertEquals(
+                CommonSnackbarMessage.Initialized,
+                (effect as CommonUiEffect.ShowSnackbar).data.message
+            )
+        }
+    }
+
+    @Test
+    fun `ダイアログを削除できること`() = runTest {
+        val actionProcessor = HomeActionProcessor()
+        val viewModel = HomeViewModel(actionProcessor, mockk())
+
+        viewModel.uiState.test {
+            // 初期状態
+            assertEquals(ScreenState(featureUiState = HomeUiState.UnInitialized), awaitItem())
+
+            // 初期化（ダイアログが追加される）
+            advanceTimeBy(1001)
+            awaitItem() // Initialized への遷移
+            val stateWithDialog = awaitItem() // ダイアログ追加
+            val dialog = stateWithDialog.localDialogQueue.first()
+
+            // ダイアログ削除
+            viewModel.removeLocalDialog(dialog)
+            val stateEmpty = awaitItem()
+            assertEquals(0, stateEmpty.localDialogQueue.size)
         }
     }
 }

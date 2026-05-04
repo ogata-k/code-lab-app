@@ -1,4 +1,4 @@
-package com.ogata_k.mobile.code_lab.common.global_ui
+package com.ogata_k.mobile.code_lab.global
 
 import kotlinx.coroutines.flow.SharedFlow
 

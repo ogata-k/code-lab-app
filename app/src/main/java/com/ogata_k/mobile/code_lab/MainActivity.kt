@@ -13,11 +13,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
 import com.ogata_k.mobile.code_lab.feature.home.HomeRoute
 import com.ogata_k.mobile.code_lab.global.GlobalUiController
 import com.ogata_k.mobile.code_lab.global.GlobalUiEffect
 import com.ogata_k.mobile.code_lab.global.GlobalUiEffectLabel
 import com.ogata_k.mobile.code_lab.global.GlobalUiEffectMessage
+import com.ogata_k.mobile.code_lab.ui.component.Home
 import com.ogata_k.mobile.code_lab.ui.theme.CodeLabTheme
 import com.ogata_k.mobile.code_lab.ui.widget.dialog.BasicDialog
 import com.ogata_k.mobile.code_lab.ui.widget.screen.AdaptiveUiHost
@@ -43,7 +47,17 @@ class MainActivity : ComponentActivity() {
                     onAddDialog = viewModel::addDialog,
                     onRemoveDialog = viewModel::removeDialog
                 ) {
-                    HomeRoute()
+                    // 初回はHome画面
+                    val backStack = rememberNavBackStack(Home)
+
+                    NavDisplay(
+                        backStack = backStack,
+                        entryProvider = entryProvider {
+                            entry<Home> {
+                                HomeRoute()
+                            }
+                        }
+                    )
                 }
             }
         }

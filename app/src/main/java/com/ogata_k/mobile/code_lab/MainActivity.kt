@@ -103,8 +103,8 @@ fun AppMain(
                         text = effect.message.asString(context),
                         dismissButtonText = stringResource(R.string.btn_close),
                         onDismissRequest = {
-                            effect.onDismiss?.invoke()
                             onDismiss()
+                            effect.onDismiss?.invoke()
                         },
                     )
                 }

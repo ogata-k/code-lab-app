@@ -51,7 +51,7 @@ sealed interface CommonDialogData {
         val cancelButtonText: CommonDialogButtonText? = null,
         val onDismiss: (() -> Unit)?,
         val actionButtonText: CommonDialogButtonText,
-        val onAction: (dismissDialog: () -> Unit) -> Unit,
+        val onAction: (showingDialog: ShowRequestActionDialog) -> Unit,
     ) : CommonDialogData
 }
 
@@ -67,8 +67,8 @@ fun CommonDialog(
                 text = effect.message.asString(),
                 dismissButtonText = stringResource(R.string.btn_close),
                 onDismissRequest = {
-                    effect.onDismiss?.invoke()
                     onDismiss()
+                    effect.onDismiss?.invoke()
                 },
             )
         }
@@ -79,8 +79,8 @@ fun CommonDialog(
                 text = effect.message.asString(),
                 dismissButtonText = stringResource(R.string.btn_confirm),
                 onDismissRequest = {
-                    effect.onDismiss?.invoke()
                     onDismiss()
+                    effect.onDismiss?.invoke()
                 },
             )
         }
@@ -95,13 +95,14 @@ fun CommonDialog(
                     stringResource(R.string.btn_cancel)
                 },
                 onDismissRequest = {
-                    effect.onDismiss?.invoke()
                     onDismiss()
+                    effect.onDismiss?.invoke()
                 },
                 action = Pair(
                     effect.actionButtonText.asString(),
                     {
-                        effect.onAction(onDismiss)
+                        onDismiss()
+                        effect.onAction(effect)
                     }
                 )
             )

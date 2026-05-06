@@ -14,8 +14,8 @@ fun BasicDialog(
     onDismissRequest: () -> Unit,
     action: Pair<String, (dismissDialog: () -> Unit) -> Unit>? = null,
     properties: DialogProperties = DialogProperties(
-        dismissOnClickOutside = false,
-        dismissOnBackPress = false,
+        dismissOnClickOutside = true,
+        dismissOnBackPress = true,
     ),
 ) {
     AlertDialog(

@@ -13,8 +13,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.ogata_k.mobile.code_lab.feature.home.HomeRoute
 import com.ogata_k.mobile.code_lab.global.GlobalUiController
@@ -52,11 +54,20 @@ class MainActivity : ComponentActivity() {
 
                     NavDisplay(
                         backStack = backStack,
+                        entryDecorators = listOf(
+                            // Entryを画面回転で破棄されないようにsaveableに保存させる
+                            rememberSaveableStateHolderNavEntryDecorator(),
+                            // Activity単位ではなくEntry単位でViewModelのライフサイクルを管理させる
+                            rememberViewModelStoreNavEntryDecorator(),
+                        ),
+                        onBack = {
+                            backStack.removeLastOrNull()
+                        },
                         entryProvider = entryProvider {
                             entry<Home> {
                                 HomeRoute()
                             }
-                        }
+                        },
                     )
                 }
             }

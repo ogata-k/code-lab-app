@@ -1,4 +1,4 @@
-package com.ogata_k.mobile.code_lab.feature.home
+package com.ogata_k.mobile.code_lab.feature.select_template
 
 import app.cash.turbine.test
 import com.ogata_k.mobile.code_lab.core.mvi.CommonUiEffect
@@ -18,7 +18,7 @@ import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class HomeViewModelTest {
+class SelectTemplateViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -34,17 +34,20 @@ class HomeViewModelTest {
 
     @Test
     fun `初期化後にディレイを経てInitialized状態に遷移すること`() = runTest {
-        val actionProcessor = HomeActionProcessor()
+        val actionProcessor = SelectTemplateActionProcessor()
         // viewModel uses viewModelScope, which uses Dispatchers.Main (set to testDispatcher above)
-        val viewModel = HomeViewModel(actionProcessor, mockk())
+        val viewModel = SelectTemplateViewModel(actionProcessor, mockk())
 
         viewModel.uiState.test {
             // 1. Initial state from Store
-            assertEquals(ScreenState(featureUiState = HomeUiState.UnInitialized), awaitItem())
+            assertEquals(
+                ScreenState(featureUiState = SelectTemplateUiState.UnInitialized),
+                awaitItem()
+            )
 
             // 2. AddDialog(Loading) happens immediately
             val loadingState = awaitItem()
-            assertEquals(HomeUiState.UnInitialized, loadingState.featureUiState)
+            assertEquals(SelectTemplateUiState.UnInitialized, loadingState.featureUiState)
             assert(loadingState.localDialogQueue.isNotEmpty())
 
             // init block calls Initialize action, which has 1s delay
@@ -52,19 +55,19 @@ class HomeViewModelTest {
 
             // 3. ToInitialized によって featureUiState が更新される
             val initializedState = awaitItem()
-            assertEquals(HomeUiState.Initialized, initializedState.featureUiState)
+            assertEquals(SelectTemplateUiState.Initialized, initializedState.featureUiState)
 
             // 4. ReplaceDialog によって localDialogQueue が更新される
             val finalState = awaitItem()
-            assertEquals(HomeUiState.Initialized, finalState.featureUiState)
+            assertEquals(SelectTemplateUiState.Initialized, finalState.featureUiState)
             assert(finalState.localDialogQueue.isNotEmpty())
         }
     }
 
     @Test
     fun `初期化時にShowSnackbarエフェクトが発行されること`() = runTest {
-        val actionProcessor = HomeActionProcessor()
-        val viewModel = HomeViewModel(actionProcessor, mockk())
+        val actionProcessor = SelectTemplateActionProcessor()
+        val viewModel = SelectTemplateViewModel(actionProcessor, mockk())
 
         viewModel.commonUiEffect.test {
             advanceTimeBy(1001)
@@ -79,12 +82,15 @@ class HomeViewModelTest {
 
     @Test
     fun `ダイアログを削除できること`() = runTest {
-        val actionProcessor = HomeActionProcessor()
-        val viewModel = HomeViewModel(actionProcessor, mockk())
+        val actionProcessor = SelectTemplateActionProcessor()
+        val viewModel = SelectTemplateViewModel(actionProcessor, mockk())
 
         viewModel.uiState.test {
             // 1. 初期状態
-            assertEquals(ScreenState(featureUiState = HomeUiState.UnInitialized), awaitItem())
+            assertEquals(
+                ScreenState(featureUiState = SelectTemplateUiState.UnInitialized),
+                awaitItem()
+            )
 
             // 2. ローディング追加
             awaitItem()

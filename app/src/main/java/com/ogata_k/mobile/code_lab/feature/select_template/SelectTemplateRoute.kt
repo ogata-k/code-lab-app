@@ -1,4 +1,4 @@
-package com.ogata_k.mobile.code_lab.feature.home
+package com.ogata_k.mobile.code_lab.feature.select_template
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -7,11 +7,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ogata_k.mobile.code_lab.ui.widget.screen.AdaptiveRouteHost
 
 /**
- * Home featureのナビゲーションルートとなるComposable関数
+ * SelectTemplate featureのナビゲーションルートとなるComposable関数
  */
 @Composable
-fun HomeRoute(
-    viewModel: HomeViewModel = hiltViewModel()
+fun SelectTemplateRoute(
+    viewModel: SelectTemplateViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -21,7 +21,7 @@ fun HomeRoute(
             // TODO: 実際の処理
         },
     ) {
-        HomeScreen(
+        SelectTemplateScreen(
             uiState = uiState.featureUiState,
             onIntent = { viewModel.dispatchIntent(it) },
         )

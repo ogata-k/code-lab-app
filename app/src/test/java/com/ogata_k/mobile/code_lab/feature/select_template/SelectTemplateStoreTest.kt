@@ -1,4 +1,4 @@
-package com.ogata_k.mobile.code_lab.feature.home
+package com.ogata_k.mobile.code_lab.feature.select_template
 
 import app.cash.turbine.test
 import com.ogata_k.mobile.code_lab.core.mvi.CommonUiEffect
@@ -13,70 +13,76 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class HomeStoreTest {
+class SelectTemplateStoreTest {
     @Test
     fun `初期状態がUnInitializedであること`() = runTest {
-        val actionProcessor = HomeActionProcessor()
-        val store = HomeStore(
+        val actionProcessor = SelectTemplateActionProcessor()
+        val store = SelectTemplateStore(
             scope = backgroundScope,
-            initialState = HomeUiState.UnInitialized,
+            initialState = SelectTemplateUiState.UnInitialized,
             actionProcessor = actionProcessor,
-            reducer = HomeReducer(),
+            reducer = SelectTemplateReducer(),
             globalUiController = mockk()
         )
 
-        assertEquals(ScreenState(featureUiState = HomeUiState.UnInitialized), store.uiState.value)
+        assertEquals(
+            ScreenState(featureUiState = SelectTemplateUiState.UnInitialized),
+            store.uiState.value
+        )
     }
 
     @Test
     fun `Initializeアクションによって状態がInitializedに更新されること`() = runTest {
-        val actionProcessor = HomeActionProcessor()
-        val store = HomeStore(
+        val actionProcessor = SelectTemplateActionProcessor()
+        val store = SelectTemplateStore(
             scope = backgroundScope,
-            initialState = HomeUiState.UnInitialized,
+            initialState = SelectTemplateUiState.UnInitialized,
             actionProcessor = actionProcessor,
-            reducer = HomeReducer(),
+            reducer = SelectTemplateReducer(),
             globalUiController = mockk()
         )
 
         store.uiState.test {
             // 1. 初期状態
-            assertEquals(ScreenState(featureUiState = HomeUiState.UnInitialized), awaitItem())
+            assertEquals(
+                ScreenState(featureUiState = SelectTemplateUiState.UnInitialized),
+                awaitItem()
+            )
 
-            store.dispatchAction(HomeAction.Initialize)
+            store.dispatchAction(SelectTemplateAction.Initialize)
 
             // 2. delay前に AddDialog(ShowLoading) が呼ばれる
             val stateWithLoading = awaitItem()
-            assertEquals(HomeUiState.UnInitialized, stateWithLoading.featureUiState)
+            assertEquals(SelectTemplateUiState.UnInitialized, stateWithLoading.featureUiState)
             assert(stateWithLoading.localDialogQueue.first() is CommonDialogData.ShowLoading)
 
             advanceTimeBy(1001)
 
             // 3. ToInitialized によって featureUiState が更新される
             val stateInitialized = awaitItem()
-            assertEquals(HomeUiState.Initialized, stateInitialized.featureUiState)
+            assertEquals(SelectTemplateUiState.Initialized, stateInitialized.featureUiState)
             assert(stateInitialized.localDialogQueue.first() is CommonDialogData.ShowLoading)
 
             // 4. ReplaceDialog によって localDialogQueue が更新される
             val finalState = awaitItem()
-            assertEquals(HomeUiState.Initialized, finalState.featureUiState)
+            assertEquals(SelectTemplateUiState.Initialized, finalState.featureUiState)
             assert(finalState.localDialogQueue.first() is CommonDialogData.ShowConfirmDialog)
         }
     }
 
     @Test
     fun `InitializeアクションによってSnackbar表示エフェクトが発行されること`() = runTest {
-        val actionProcessor = HomeActionProcessor()
-        val store = HomeStore(
+        val actionProcessor = SelectTemplateActionProcessor()
+        val store = SelectTemplateStore(
             scope = backgroundScope,
-            initialState = HomeUiState.UnInitialized,
+            initialState = SelectTemplateUiState.UnInitialized,
             actionProcessor = actionProcessor,
-            reducer = HomeReducer(),
+            reducer = SelectTemplateReducer(),
             globalUiController = mockk()
         )
 
         store.commonUiEffect.test {
-            store.dispatchAction(HomeAction.Initialize)
+            store.dispatchAction(SelectTemplateAction.Initialize)
 
             advanceTimeBy(1001)
             val effect = awaitItem()

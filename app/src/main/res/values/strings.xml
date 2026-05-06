@@ -10,6 +10,9 @@
     <string name="dialog_title_error">エラー</string>
     <string name="dialog_title_confirm">確認</string>
 
+    <!-- プレースホルダー -->
+    <string name="placeholder_select_template">テンプレートを選択してください</string>
+
     <!-- エラーメッセージ -->
     <string name="error_unexpected">予期せぬエラーが発生しました。</string>
 </resources>

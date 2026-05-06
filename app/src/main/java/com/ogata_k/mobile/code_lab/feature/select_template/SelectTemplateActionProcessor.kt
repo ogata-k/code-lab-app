@@ -1,4 +1,4 @@
-package com.ogata_k.mobile.code_lab.feature.home
+package com.ogata_k.mobile.code_lab.feature.select_template
 
 import com.ogata_k.mobile.code_lab.common.logI
 import com.ogata_k.mobile.code_lab.core.mvi.ActionProcessor
@@ -13,22 +13,22 @@ import kotlinx.coroutines.delay
 import javax.inject.Inject
 
 /**
- * Home featureのアクションを処理し、ミューテーションを生成するクラス
+ * SelectTemplate featureのアクションを処理し、ミューテーションを生成するクラス
  */
-class HomeActionProcessor @Inject constructor() :
-    ActionProcessor<HomeUiState, HomeUiEffect, HomeIntent, HomeAction, HomeMutation> {
+class SelectTemplateActionProcessor @Inject constructor() :
+    ActionProcessor<SelectTemplateUiState, SelectTemplateUiEffect, SelectTemplateIntent, SelectTemplateAction, SelectTemplateMutation> {
     override suspend fun process(
-        action: HomeAction,
-        scope: StoreScope<HomeUiState, HomeUiEffect, HomeIntent, HomeAction, HomeMutation>
+        action: SelectTemplateAction,
+        scope: StoreScope<SelectTemplateUiState, SelectTemplateUiEffect, SelectTemplateIntent, SelectTemplateAction, SelectTemplateMutation>
     ) {
         when (action) {
-            is HomeAction.Initialize -> {
+            is SelectTemplateAction.Initialize -> {
                 // ローディングを表示
                 val loading = CommonDialogData.ShowLoading()
                 scope.emitCommonMutation(CommonMutation.AddDialog(loading))
 
                 delay(1000)
-                scope.emitMutation(HomeMutation.ToInitialized)
+                scope.emitMutation(SelectTemplateMutation.ToInitialized)
 
                 // 共通のSide Effectを使ってスナックバーを表示
                 scope.emitCommonUiEffect(

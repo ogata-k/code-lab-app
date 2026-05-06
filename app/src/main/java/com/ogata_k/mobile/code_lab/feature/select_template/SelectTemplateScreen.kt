@@ -1,4 +1,4 @@
-package com.ogata_k.mobile.code_lab.feature.home
+package com.ogata_k.mobile.code_lab.feature.select_template
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,12 +15,12 @@ import com.ogata_k.mobile.code_lab.ui.theme.CodeLabTheme
 import com.ogata_k.mobile.code_lab.ui.widget.screen.ScreenContainer
 
 /**
- * Home featureのメイン画面を表示するComposable関数
+ * SelectTemplate featureのメイン画面を表示するComposable関数
  */
 @Composable
-fun HomeScreen(
-    uiState: HomeUiState,
-    onIntent: (HomeIntent) -> Unit,
+fun SelectTemplateScreen(
+    uiState: SelectTemplateUiState,
+    onIntent: (SelectTemplateIntent) -> Unit,
 ) {
     ScreenContainer {
         // TODO: ListDetailPaneScaffoldで一覧として利用可能なテンプレート一覧、詳細としてテンプレートごとの作成画面みたくする。各テンプレートで作られたアイテムごとに実験場を用意する。

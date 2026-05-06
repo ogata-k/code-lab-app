@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -21,7 +20,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.window.core.layout.WindowSizeClass
 import com.ogata_k.mobile.code_lab.core.mvi.CommonUiEffect
 import com.ogata_k.mobile.code_lab.core.mvi.StoreContainer
 import com.ogata_k.mobile.code_lab.core.mvi.UiEffect
@@ -38,12 +36,6 @@ fun <T> AdaptiveUiHost(
     dialogContent: @Composable (T, onDismiss: () -> Unit) -> Unit,
     content: @Composable () -> Unit
 ) {
-    val adaptiveInfo = currentWindowAdaptiveInfo()
-    // ヒンジ（物理的な分割）がある場合、または広い画面（タブレット等）の場合はダイアログを中央からずらす
-    val isSeparated =
-        adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
-                || adaptiveInfo.windowPosture.hingeList.any { it.isSeparating }
-
     Box(modifier = modifier.fillMaxSize()) {
         content()
 
@@ -63,8 +55,6 @@ fun <T> AdaptiveUiHost(
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.6f))
                     .pointerInput(Unit) {}, // 下層への入力をブロック
-                // ヒンジがある場合は左側(CenterStart)に寄せて物理的な分割を避ける
-                contentAlignment = if (isSeparated) Alignment.CenterStart else Alignment.Center
             ) {
                 dialogContent(effect) {
                     onDismissDialog(effect)

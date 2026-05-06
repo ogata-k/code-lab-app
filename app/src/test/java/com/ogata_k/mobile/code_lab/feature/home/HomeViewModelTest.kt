@@ -39,15 +39,22 @@ class HomeViewModelTest {
         val viewModel = HomeViewModel(actionProcessor, mockk())
 
         viewModel.uiState.test {
-            // Initial state from Store
+            // 1. Initial state from Store
             assertEquals(ScreenState(featureUiState = HomeUiState.UnInitialized), awaitItem())
+
+            // 2. AddDialog(Loading) happens immediately
+            val loadingState = awaitItem()
+            assertEquals(HomeUiState.UnInitialized, loadingState.featureUiState)
+            assert(loadingState.localDialogQueue.isNotEmpty())
 
             // init block calls Initialize action, which has 1s delay
             advanceTimeBy(1001)
 
-            // 1. ToInitialized によって featureUiState が更新される
-            assertEquals(ScreenState(featureUiState = HomeUiState.Initialized), awaitItem())
-            // 2. AddDialog によって localDialogQueue が更新される
+            // 3. ToInitialized によって featureUiState が更新される
+            val initializedState = awaitItem()
+            assertEquals(HomeUiState.Initialized, initializedState.featureUiState)
+
+            // 4. ReplaceDialog によって localDialogQueue が更新される
             val finalState = awaitItem()
             assertEquals(HomeUiState.Initialized, finalState.featureUiState)
             assert(finalState.localDialogQueue.isNotEmpty())
@@ -76,16 +83,19 @@ class HomeViewModelTest {
         val viewModel = HomeViewModel(actionProcessor, mockk())
 
         viewModel.uiState.test {
-            // 初期状態
+            // 1. 初期状態
             assertEquals(ScreenState(featureUiState = HomeUiState.UnInitialized), awaitItem())
 
-            // 初期化（ダイアログが追加される）
+            // 2. ローディング追加
+            awaitItem()
+
+            // 3. 初期化完了
             advanceTimeBy(1001)
             awaitItem() // Initialized への遷移
-            val stateWithDialog = awaitItem() // ダイアログ追加
+            val stateWithDialog = awaitItem() // ダイアログ置き換え (ConfirmDialog)
             val dialog = stateWithDialog.localDialogQueue.first()
 
-            // ダイアログ削除
+            // 4. ダイアログ削除
             viewModel.removeLocalDialog(dialog)
             val stateEmpty = awaitItem()
             assertEquals(0, stateEmpty.localDialogQueue.size)

@@ -28,6 +28,10 @@ abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent<A>, A : Act
         store.removeDialog(dialog)
     }
 
+    override fun replaceLocalDialog(dialog: CommonDialogData, fromData: CommonDialogData?) {
+        store.replaceDialog(dialog, fromData)
+    }
+
     /**
      * 利用者の明示的な操作のdispatcher
      */

@@ -117,6 +117,13 @@ interface Mutation
 sealed interface CommonMutation : Mutation {
     data class AddDialog(val data: CommonDialogData) : CommonMutation
     data class RemoveDialog(val data: CommonDialogData) : CommonMutation
+
+    /**
+     * 先頭のダイアログを引数のデータで置き換える。指定されたfromDataがあればそれを置き換える。
+     * 先頭がなかったり指定したfromDataが見つからなければ、先頭に追加とする。
+     */
+    data class ReplaceDialog(val data: CommonDialogData, val fromData: CommonDialogData? = null) :
+        CommonMutation
 }
 
 /**
@@ -293,4 +300,10 @@ interface StoreContainer<US : UiState, UE : UiEffect, I : Intent<A>, A : Action>
      * ダイアログを削除
      */
     fun removeLocalDialog(dialog: CommonDialogData)
+
+    /**
+     * 先頭のダイアログを引数のデータで置き換える。指定されたfromDataがあればそれを置き換える。
+     * 先頭がなかったり指定したfromDataが見つからなければ、先頭に追加とする。
+     */
+    fun replaceLocalDialog(dialog: CommonDialogData, fromData: CommonDialogData? = null)
 }

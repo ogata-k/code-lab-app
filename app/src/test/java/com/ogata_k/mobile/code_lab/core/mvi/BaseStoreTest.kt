@@ -402,11 +402,189 @@ class BaseStoreTest {
             store.dispatchAction(TestAction.Action1("add"))
             val stateWithDialog = awaitItem()
             assertEquals(1, stateWithDialog.localDialogQueue.size)
+            assertEquals(dialogData, stateWithDialog.localDialogQueue.firstOrNull())
 
             // ダイアログ削除
             store.removeDialog(dialogData)
             val stateEmpty = awaitItem()
             assertEquals(0, stateEmpty.localDialogQueue.size)
+        }
+    }
+
+    @Test
+    fun `ReplaceDialogでfromDataがnullかつキューが空の場合、先頭に追加されること`() = runTest {
+        val actionProcessor =
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
+        val dialogData = CommonDialogData.ShowConfirmDialog(CommonDialogMessage.Initialized) {}
+
+        coEvery { actionProcessor.process(any(), any()) } coAnswers {
+            secondArg<TestScope>().emitCommonMutation(
+                CommonMutation.ReplaceDialog(
+                    dialogData,
+                    null
+                )
+            )
+        }
+
+        val store = TestStore(
+            scope = backgroundScope,
+            initialState = TestUiState.Initial,
+            actionProcessor = actionProcessor,
+            reducer = reducer
+        )
+
+        store.uiState.test {
+            assertEquals(0, awaitItem().localDialogQueue.size)
+            store.dispatchAction(TestAction.Action1("test"))
+            val state = awaitItem()
+            assertEquals(1, state.localDialogQueue.size)
+            assertEquals(dialogData, state.localDialogQueue[0])
+        }
+    }
+
+    @Test
+    fun `ReplaceDialogでfromDataがnullかつキューが空でない場合、先頭が置き換わること`() = runTest {
+        val actionProcessor =
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
+        val initialDialog = CommonDialogData.ShowErrorDialog(CommonDialogMessage.Initialized, null)
+        val newDialog = CommonDialogData.ShowConfirmDialog(CommonDialogMessage.Initialized) {}
+
+        coEvery { actionProcessor.process(any(), any()) } coAnswers {
+            val action = it.invocation.args[0] as TestAction.Action1
+            val scope = secondArg<TestScope>()
+            when (action.value) {
+                "add" -> scope.emitCommonMutation(CommonMutation.AddDialog(initialDialog))
+                "replace" -> scope.emitCommonMutation(CommonMutation.ReplaceDialog(newDialog, null))
+            }
+        }
+
+        val store = TestStore(
+            scope = backgroundScope,
+            initialState = TestUiState.Initial,
+            actionProcessor = actionProcessor,
+            reducer = reducer
+        )
+
+        store.uiState.test {
+            awaitItem() // Initial
+
+            store.dispatchAction(TestAction.Action1("add"))
+            assertEquals(listOf(initialDialog), awaitItem().localDialogQueue)
+
+            store.dispatchAction(TestAction.Action1("replace"))
+            assertEquals(listOf(newDialog), awaitItem().localDialogQueue)
+        }
+    }
+
+    @Test
+    fun `ReplaceDialogでfromDataが指定されキューに存在する場合、そのダイアログが置き換わること`() =
+        runTest {
+            val actionProcessor =
+                mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
+            val dialog1 = CommonDialogData.ShowErrorDialog(CommonDialogMessage.Initialized, null)
+            val dialog2 = CommonDialogData.ShowConfirmDialog(CommonDialogMessage.Initialized) {}
+            val replacement = CommonDialogData.ShowLoading()
+
+            coEvery { actionProcessor.process(any(), any()) } coAnswers {
+                val action = it.invocation.args[0] as TestAction.Action1
+                val scope = secondArg<TestScope>()
+                when (action.value) {
+                    "add1" -> scope.emitCommonMutation(CommonMutation.AddDialog(dialog1))
+                    "add2" -> scope.emitCommonMutation(CommonMutation.AddDialog(dialog2))
+                    "replace" -> scope.emitCommonMutation(
+                        CommonMutation.ReplaceDialog(
+                            replacement,
+                            dialog2
+                        )
+                    )
+                }
+            }
+
+            val store = TestStore(
+                scope = backgroundScope,
+                initialState = TestUiState.Initial,
+                actionProcessor = actionProcessor,
+                reducer = reducer
+            )
+
+            store.uiState.test {
+                awaitItem()
+
+                store.dispatchAction(TestAction.Action1("add1"))
+                assertEquals(listOf(dialog1), awaitItem().localDialogQueue)
+
+                store.dispatchAction(TestAction.Action1("add2"))
+                assertEquals(listOf(dialog1, dialog2), awaitItem().localDialogQueue)
+
+                store.dispatchAction(TestAction.Action1("replace"))
+                assertEquals(listOf(dialog1, replacement), awaitItem().localDialogQueue)
+            }
+        }
+
+    @Test
+    fun `ReplaceDialogでfromDataが指定されキューに存在しない場合、先頭に追加されること`() = runTest {
+        val actionProcessor =
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
+        val initialDialog = CommonDialogData.ShowErrorDialog(CommonDialogMessage.Initialized, null)
+        val nonExistentDialog = CommonDialogData.ShowLoading()
+        val newDialog = CommonDialogData.ShowConfirmDialog(CommonDialogMessage.Initialized) {}
+
+        coEvery { actionProcessor.process(any(), any()) } coAnswers {
+            val action = it.invocation.args[0] as TestAction.Action1
+            val scope = secondArg<TestScope>()
+            when (action.value) {
+                "add" -> scope.emitCommonMutation(CommonMutation.AddDialog(initialDialog))
+                "replace" -> scope.emitCommonMutation(
+                    CommonMutation.ReplaceDialog(
+                        newDialog,
+                        nonExistentDialog
+                    )
+                )
+            }
+        }
+
+        val store = TestStore(
+            scope = backgroundScope,
+            initialState = TestUiState.Initial,
+            actionProcessor = actionProcessor,
+            reducer = reducer
+        )
+
+        store.uiState.test {
+            awaitItem()
+
+            store.dispatchAction(TestAction.Action1("add"))
+            assertEquals(listOf(initialDialog), awaitItem().localDialogQueue)
+
+            // 存在しないダイアログを指定して置き換え -> 先頭に追加
+            store.dispatchAction(TestAction.Action1("replace"))
+            assertEquals(listOf(newDialog, initialDialog), awaitItem().localDialogQueue)
+        }
+    }
+
+    @Test
+    fun `CommonDialogData_ShowLoadingが正しくキューに追加されること`() = runTest {
+        val actionProcessor =
+            mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
+        val loading = CommonDialogData.ShowLoading(CommonDialogMessage.Initialized)
+
+        coEvery { actionProcessor.process(any(), any()) } coAnswers {
+            secondArg<TestScope>().emitCommonMutation(CommonMutation.AddDialog(loading))
+        }
+
+        val store = TestStore(
+            scope = backgroundScope,
+            initialState = TestUiState.Initial,
+            actionProcessor = actionProcessor,
+            reducer = reducer
+        )
+
+        store.uiState.test {
+            awaitItem()
+            store.dispatchAction(TestAction.Action1("test"))
+            val state = awaitItem()
+            assertTrue(state.localDialogQueue.first() is CommonDialogData.ShowLoading)
+            assertEquals(loading, state.localDialogQueue.first())
         }
     }
 

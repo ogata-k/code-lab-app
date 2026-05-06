@@ -23,6 +23,10 @@ class HomeActionProcessor @Inject constructor() :
     ) {
         when (action) {
             is HomeAction.Initialize -> {
+                // ローディングを表示
+                val loading = CommonDialogData.ShowLoading()
+                scope.emitCommonMutation(CommonMutation.AddDialog(loading))
+
                 delay(1000)
                 scope.emitMutation(HomeMutation.ToInitialized)
 
@@ -33,17 +37,16 @@ class HomeActionProcessor @Inject constructor() :
                     )
                 )
 
-                // ダイアログ表示は例えばこんな感じ
+                // ローディングを完了ダイアログに置き換える
                 scope.emitCommonMutation(
-                    CommonMutation.AddDialog(
-                        CommonDialogData.ShowConfirmDialog(
+                    CommonMutation.ReplaceDialog(
+                        data = CommonDialogData.ShowConfirmDialog(
                             message = CommonDialogMessage.Initialized,
                             onDismiss = {
-                                // ユーザーが閉じた時の処理があればここに書く
-                                // dispatchIntent(HomeIntent.SomeIntent) など
                                 logI("CommonMutation") { "confirm dialog on dismiss" }
                             }
-                        )
+                        ),
+                        fromData = loading
                     )
                 )
             }

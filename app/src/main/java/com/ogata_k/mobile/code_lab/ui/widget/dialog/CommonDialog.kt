@@ -53,6 +53,10 @@ sealed interface CommonDialogData {
         val actionButtonText: CommonDialogButtonText,
         val onAction: (showingDialog: ShowRequestActionDialog) -> Unit,
     ) : CommonDialogData
+
+    data class ShowLoading(
+        val message: CommonDialogMessage? = null,
+    ) : CommonDialogData
 }
 
 @Composable
@@ -101,10 +105,15 @@ fun CommonDialog(
                 action = Pair(
                     effect.actionButtonText.asString(),
                     {
-                        onDismiss()
                         effect.onAction(effect)
                     }
                 )
+            )
+        }
+
+        is CommonDialogData.ShowLoading -> {
+            LoadingDialog(
+                message = effect.message?.asString()
             )
         }
     }

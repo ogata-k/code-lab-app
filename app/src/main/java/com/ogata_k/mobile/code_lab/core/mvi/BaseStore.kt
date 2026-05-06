@@ -338,6 +338,28 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
                 is CommonMutation.RemoveDialog -> {
                     currentScreenState.copy(localDialogQueue = currentScreenState.localDialogQueue - mutation.data)
                 }
+
+                is CommonMutation.ReplaceDialog -> {
+                    val nextQueue = if (mutation.fromData == null) {
+                        if (currentScreenState.localDialogQueue.isNotEmpty()) {
+                            currentScreenState.localDialogQueue.toMutableList().apply {
+                                set(0, mutation.data)
+                            }
+                        } else {
+                            listOf(mutation.data)
+                        }
+                    } else {
+                        val index = currentScreenState.localDialogQueue.indexOf(mutation.fromData)
+                        if (index != -1) {
+                            currentScreenState.localDialogQueue.toMutableList().apply {
+                                set(index, mutation.data)
+                            }
+                        } else {
+                            listOf(mutation.data) + currentScreenState.localDialogQueue
+                        }
+                    }
+                    currentScreenState.copy(localDialogQueue = nextQueue)
+                }
             }
             logV("Store") {
                 "emit CommonMutation: $mutation, from ScreenState: $currentScreenState, to ScreenState: $nextScreenState"
@@ -352,6 +374,16 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
     fun removeDialog(dialog: CommonDialogData) {
         scope.launch {
             emitCommonMutation(CommonMutation.RemoveDialog(dialog))
+        }
+    }
+
+    /**
+     * 先頭のダイアログを引数のデータで置き換える。指定されたfromDataがあればそれを置き換える。
+     * 先頭がなかったり指定したfromDataが見つからなければ、先頭に追加とする。
+     */
+    fun replaceDialog(dialog: CommonDialogData, fromData: CommonDialogData? = null) {
+        scope.launch {
+            emitCommonMutation(CommonMutation.ReplaceDialog(dialog, fromData))
         }
     }
 

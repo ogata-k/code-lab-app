@@ -3,6 +3,7 @@ package com.ogata_k.mobile.code_lab.feature.home
 import app.cash.turbine.test
 import com.ogata_k.mobile.code_lab.core.mvi.CommonUiEffect
 import com.ogata_k.mobile.code_lab.core.mvi.ScreenState
+import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
 import com.ogata_k.mobile.code_lab.ui.widget.snackbar.CommonSnackbarMessage
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -39,17 +40,27 @@ class HomeStoreTest {
         )
 
         store.uiState.test {
+            // 1. 初期状態
             assertEquals(ScreenState(featureUiState = HomeUiState.UnInitialized), awaitItem())
 
             store.dispatchAction(HomeAction.Initialize)
 
+            // 2. delay前に AddDialog(ShowLoading) が呼ばれる
+            val stateWithLoading = awaitItem()
+            assertEquals(HomeUiState.UnInitialized, stateWithLoading.featureUiState)
+            assert(stateWithLoading.localDialogQueue.first() is CommonDialogData.ShowLoading)
+
             advanceTimeBy(1001)
-            // 1. ToInitialized によって featureUiState が更新される
-            assertEquals(ScreenState(featureUiState = HomeUiState.Initialized), awaitItem())
-            // 2. AddDialog によって localDialogQueue が更新される
+
+            // 3. ToInitialized によって featureUiState が更新される
+            val stateInitialized = awaitItem()
+            assertEquals(HomeUiState.Initialized, stateInitialized.featureUiState)
+            assert(stateInitialized.localDialogQueue.first() is CommonDialogData.ShowLoading)
+
+            // 4. ReplaceDialog によって localDialogQueue が更新される
             val finalState = awaitItem()
             assertEquals(HomeUiState.Initialized, finalState.featureUiState)
-            assert(finalState.localDialogQueue.isNotEmpty())
+            assert(finalState.localDialogQueue.first() is CommonDialogData.ShowConfirmDialog)
         }
     }
 

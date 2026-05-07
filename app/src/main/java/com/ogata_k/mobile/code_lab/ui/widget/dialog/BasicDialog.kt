@@ -15,9 +15,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.ogata_k.mobile.code_lab.ui.theme.SpacingM
+import com.ogata_k.mobile.code_lab.ui.theme.SpacingS
+import com.ogata_k.mobile.code_lab.ui.theme.SpacingXS
+import com.ogata_k.mobile.code_lab.ui.theme.SpacingXXL
 
 @Composable
 fun BasicDialog(
@@ -84,25 +87,25 @@ fun LoadingDialog(
         )
     ) {
         Surface(
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(SpacingS),
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp
+            tonalElevation = SpacingXS
         ) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .padding(24.dp)
+                    .padding(SpacingM)
             ) {
                 if (message != null) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        CircularProgressIndicator(modifier = Modifier.size(48.dp))
-                        Spacer(modifier = Modifier.size(16.dp))
+                        CircularProgressIndicator(modifier = Modifier.size(SpacingXXL))
+                        Spacer(modifier = Modifier.size(SpacingS))
                         Text(text = message)
                     }
                 } else {
-                    CircularProgressIndicator(modifier = Modifier.size(48.dp))
+                    CircularProgressIndicator(modifier = Modifier.size(SpacingXXL))
                 }
             }
         }

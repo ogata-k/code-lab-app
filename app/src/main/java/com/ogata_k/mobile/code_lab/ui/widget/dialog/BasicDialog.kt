@@ -27,7 +27,7 @@ fun BasicDialog(
     onDismissRequest: () -> Unit,
     action: Pair<String, (dismissDialog: () -> Unit) -> Unit>? = null,
     properties: DialogProperties = DialogProperties(
-        dismissOnClickOutside = true,
+        dismissOnClickOutside = false,
         dismissOnBackPress = true,
     ),
 ) {

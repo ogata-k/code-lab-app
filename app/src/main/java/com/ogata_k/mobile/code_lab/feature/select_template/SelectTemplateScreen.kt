@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,6 +15,7 @@ import com.ogata_k.mobile.code_lab.domain.enum.TemplateDiv
 import com.ogata_k.mobile.code_lab.ui.theme.NoSpacing
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXS
 import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicScaffold
+import com.ogata_k.mobile.code_lab.ui.widget.text.BodyLargeText
 
 /**
  * SelectTemplate featureのメイン画面を表示するComposable関数
@@ -43,7 +43,7 @@ fun SelectTemplateScreen(
                         onIntent(SelectTemplateIntent.NavigateToTemplate(TemplateDiv.Sample))
                     },
                     headlineContent = {
-                        Text(TemplateDiv.Sample.name)
+                        BodyLargeText(TemplateDiv.Sample.name)
                     }
 
                 )

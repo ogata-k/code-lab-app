@@ -10,7 +10,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,6 +20,9 @@ import com.ogata_k.mobile.code_lab.ui.theme.SpacingM
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingS
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXS
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXXL
+import com.ogata_k.mobile.code_lab.ui.widget.text.BodyMediumText
+import com.ogata_k.mobile.code_lab.ui.widget.text.ButtonMediumText
+import com.ogata_k.mobile.code_lab.ui.widget.text.TitleLargeText
 
 @Composable
 fun BasicDialog(
@@ -41,9 +43,9 @@ fun BasicDialog(
         },
         properties = properties,
         title = {
-            Text(title)
+            TitleLargeText(title)
         },
-        text = { Text(text) },
+        text = { BodyMediumText(text) },
         dismissButton = if (action == null) {
             null
         } else {
@@ -51,7 +53,7 @@ fun BasicDialog(
                 TextButton(onClick = {
                     onDismissRequest()
                 }) {
-                    Text(dismissButtonText)
+                    ButtonMediumText(dismissButtonText)
                 }
             }
         },
@@ -60,7 +62,7 @@ fun BasicDialog(
                 TextButton(onClick = {
                     onDismissRequest()
                 }) {
-                    Text(dismissButtonText)
+                    ButtonMediumText(dismissButtonText)
                 }
             }
         } else {
@@ -68,7 +70,7 @@ fun BasicDialog(
                 TextButton(onClick = {
                     action.second(onDismissRequest)
                 }) {
-                    Text(action.first)
+                    ButtonMediumText(action.first)
                 }
             }
         },
@@ -102,7 +104,7 @@ fun LoadingDialog(
                     ) {
                         CircularProgressIndicator(modifier = Modifier.size(SpacingXXL))
                         Spacer(modifier = Modifier.size(SpacingS))
-                        Text(text = message)
+                        BodyMediumText(text = message)
                     }
                 } else {
                     CircularProgressIndicator(modifier = Modifier.size(SpacingXXL))

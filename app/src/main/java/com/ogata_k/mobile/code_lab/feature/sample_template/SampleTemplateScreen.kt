@@ -1,7 +1,6 @@
 package com.ogata_k.mobile.code_lab.feature.sample_template
 
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -10,6 +9,7 @@ import com.ogata_k.mobile.code_lab.R
 import com.ogata_k.mobile.code_lab.domain.enum.TemplateDiv
 import com.ogata_k.mobile.code_lab.ui.theme.CodeLabTheme
 import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicScaffold
+import com.ogata_k.mobile.code_lab.ui.widget.text.BodyLargeText
 
 /**
  * SampleTemplate featureのメイン画面を表示するComposable関数
@@ -32,7 +32,7 @@ fun SampleTemplateScreen(
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     val appName: String = stringResource(R.string.app_name)
-    Text(
+    BodyLargeText(
         text = "Hello $name for $appName!",
         modifier = modifier
     )

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDragHandle
 import androidx.compose.material3.VerticalDragHandleDefaults
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
@@ -44,6 +43,7 @@ import com.ogata_k.mobile.code_lab.feature.select_template.SelectTemplateRoute
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingS
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXS
 import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicScaffold
+import com.ogata_k.mobile.code_lab.ui.widget.text.BodyLargeText
 import kotlinx.serialization.Serializable
 
 sealed interface RouteNavKey : NavKey {
@@ -161,9 +161,8 @@ fun SetupRouting() {
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Text(
+                                BodyLargeText(
                                     text = stringResource(R.string.placeholder_select_template),
-                                    style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }

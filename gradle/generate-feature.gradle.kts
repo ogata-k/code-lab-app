@@ -240,8 +240,11 @@ tasks.register("generateFeature") {
                 import androidx.compose.foundation.layout.Box
                 import androidx.compose.foundation.layout.fillMaxSize
                 import androidx.compose.foundation.layout.padding
+                import androidx.compose.material3.MaterialTheme
                 import androidx.compose.material3.Scaffold
                 import androidx.compose.material3.Text
+                import androidx.compose.material3.TopAppBar
+                import androidx.compose.material3.TopAppBarDefaults
                 import androidx.compose.runtime.Composable
                 import androidx.compose.ui.Modifier
                 import androidx.compose.ui.res.stringResource
@@ -261,6 +264,15 @@ tasks.register("generateFeature") {
                     ScreenContainer {
                         Scaffold(
                             modifier = Modifier.fillMaxSize(),
+                            topBar = {
+                                TopAppBar(
+                                    colors = TopAppBarDefaults.topAppBarColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        titleContentColor = MaterialTheme.colorScheme.primary,
+                                    ), title = {
+                                        // @todo 必要ならタイトルを追加
+                                    })
+                            },
                         ) { innerPadding ->
                             Box(
                                 Modifier

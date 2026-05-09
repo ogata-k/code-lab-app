@@ -2,6 +2,8 @@ package com.ogata_k.mobile.code_lab.ui.theme
 
 import androidx.compose.ui.unit.dp
 
+val NoSpacing = 0.dp
+
 val SpacingXXS = 4.dp
 val SpacingXS = 8.dp
 val SpacingS = 16.dp

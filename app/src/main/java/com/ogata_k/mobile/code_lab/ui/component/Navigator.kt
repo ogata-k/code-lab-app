@@ -1,23 +1,26 @@
 package com.ogata_k.mobile.code_lab.ui.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.VerticalDragHandle
 import androidx.compose.material3.VerticalDragHandleDefaults
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.PaneExpansionAnchor
 import androidx.compose.material3.adaptive.layout.rememberPaneExpansionState
+import androidx.compose.material3.adaptive.navigation.BackNavigationBehavior
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
@@ -35,14 +38,35 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.scene.SinglePaneSceneStrategy
 import androidx.navigation3.ui.NavDisplay
 import com.ogata_k.mobile.code_lab.R
+import com.ogata_k.mobile.code_lab.domain.enum.TemplateDiv
+import com.ogata_k.mobile.code_lab.feature.sample_template.SampleTemplateRoute
 import com.ogata_k.mobile.code_lab.feature.select_template.SelectTemplateRoute
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingS
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXS
+import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicScaffold
 import kotlinx.serialization.Serializable
 
 sealed interface RouteNavKey : NavKey {
+    /**
+     * テンプレート選択のルーティング
+     * 実質、ホーム画面
+     */
     @Serializable
     data object SelectTemplate : RouteNavKey
+
+    /**
+     * アプリでよく見るサンプルテンプレートのルーティング
+     */
+    @Serializable
+    data object SampleTemplate : RouteNavKey
+
+    fun isSelectTemplateDetail(): Boolean {
+        return listOf(SampleTemplate).contains(this)
+    }
+}
+
+sealed interface SceneKey {
+    data object SelectTemplate : SceneKey
 }
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalMaterial3Api::class)
@@ -56,23 +80,22 @@ fun SetupRouting() {
     val backStack = rememberNavBackStack(RouteNavKey.SelectTemplate)
 
     val expansionState = rememberPaneExpansionState(
-        // ドラッグ可能な境界点（アンカー）を定義する
+        // ドラッグ可能な境界点（アンカー）を定義する。
+        // 一番近いアンカーにDragHandleが吸いつく挙動になる。
         anchors = listOf(
-            // Listペインの最小サイズを 300.dp に制限（これ以上左にドラッグ不可）
-            // ※固定値で指定する場合。画面幅に応じて変えたい場合は Fraction(0.3f) などを使用
+            // Listペインの最小サイズを 30% に制限
             PaneExpansionAnchor.Proportion(0.3f),
 
-            // 中央 (50%)
-            PaneExpansionAnchor.Proportion(0.5f),
+            // 40%
+            PaneExpansionAnchor.Proportion(0.4f),
 
-            // Detailペインの最小サイズを確保するためのアンカー
-            // 例: 右端から 400.dp の位置（これ以上右にドラッグ不可）
-            // ※固定値で指定する場合。画面幅に応じて変えたい場合は Fraction(0.7f) などを使用
+            // Listペインの最大サイズを 70% に制限（逆にDetailペインの最小サイズは 30%）
             PaneExpansionAnchor.Proportion(0.7f)
         )
     )
     val interactionSource = remember { MutableInteractionSource() }
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(
+        backNavigationBehavior = BackNavigationBehavior.PopUntilScaffoldValueChange,
         paneExpansionDragHandle = if (isSeparating) {
             null
         } else {
@@ -110,6 +133,10 @@ fun SetupRouting() {
     )
 
     NavDisplay(
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.onSurfaceVariant)
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+            .background(MaterialTheme.colorScheme.inverseOnSurface),
         backStack = backStack,
         onBack = {
             backStack.removeLastOrNull()
@@ -127,25 +154,12 @@ fun SetupRouting() {
         entryProvider = entryProvider {
             entry<RouteNavKey.SelectTemplate>(
                 metadata = ListDetailSceneStrategy.listPane(
-                    sceneKey = "select-template",
+                    sceneKey = SceneKey.SelectTemplate,
                     detailPlaceholder = {
-                        Scaffold(
-                            modifier = Modifier.fillMaxSize(),
-                            topBar = {
-                                TopAppBar(
-                                    colors = TopAppBarDefaults.topAppBarColors(
-                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                        titleContentColor = MaterialTheme.colorScheme.primary,
-                                    ), title = {
-                                        // 一覧のヘッダーに高さを合わせるためにダミーとして指定
-                                    })
-                            },
-                        ) { innerPadding ->
+                        BasicScaffold {
                             Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding),
-                                contentAlignment = Alignment.Center
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
                             ) {
                                 Text(
                                     text = stringResource(R.string.placeholder_select_template),
@@ -155,11 +169,43 @@ fun SetupRouting() {
                             }
                         }
                     }
+                ),
+            ) { _ ->
+                SelectTemplateRoute(
+                    navigateToTemplate = { templateDiv ->
+                        fun navigateToDetail(key: RouteNavKey) {
+                            var popped = 0
+                            while (true) {
+                                val lastRoute = backStack.lastOrNull()
+                                if (lastRoute != null && lastRoute is RouteNavKey && lastRoute.isSelectTemplateDetail()) {
+                                    if (lastRoute == key) {
+                                        // すでに画面に乗っているので画面遷移処理の必要なし
+                                        return
+                                    }
+                                    backStack.removeLastOrNull()
+                                    popped += 1
+                                    continue
+                                }
+                                break
+                            }
+                            backStack.add(key)
+                        }
+                        when (templateDiv) {
+                            TemplateDiv.Sample -> {
+                                navigateToDetail(RouteNavKey.SampleTemplate)
+                            }
+                        }
+                    }
                 )
-            ) {
-                SelectTemplateRoute()
             }
-            // TODO setup detail metadata = ListDetailSceneStrategy.detailPane(sceneKey = "select-template")
+
+            entry<RouteNavKey.SampleTemplate>(
+                metadata = ListDetailSceneStrategy.detailPane(
+                    sceneKey = SceneKey.SelectTemplate,
+                ),
+            ) { _ ->
+                SampleTemplateRoute()
+            }
         },
     )
 }

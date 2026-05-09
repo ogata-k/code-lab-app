@@ -2,10 +2,12 @@ package com.ogata_k.mobile.code_lab.feature.select_template
 
 import com.ogata_k.mobile.code_lab.common.logI
 import com.ogata_k.mobile.code_lab.core.mvi.ActionProcessor
-import com.ogata_k.mobile.code_lab.core.mvi.CommonMutation
-import com.ogata_k.mobile.code_lab.core.mvi.CommonUiEffect
+import com.ogata_k.mobile.code_lab.core.mvi.CommonMutation.AddDialog
+import com.ogata_k.mobile.code_lab.core.mvi.CommonMutation.ReplaceDialog
+import com.ogata_k.mobile.code_lab.core.mvi.CommonUiEffect.ShowSnackbar
 import com.ogata_k.mobile.code_lab.core.mvi.StoreScope
-import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
+import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData.ShowConfirmDialog
+import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData.ShowLoading
 import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogMessage
 import com.ogata_k.mobile.code_lab.ui.widget.snackbar.CommonSnackbarData
 import com.ogata_k.mobile.code_lab.ui.widget.snackbar.CommonSnackbarMessage
@@ -24,23 +26,23 @@ class SelectTemplateActionProcessor @Inject constructor() :
         when (action) {
             is SelectTemplateAction.Initialize -> {
                 // ローディングを表示
-                val loading = CommonDialogData.ShowLoading()
-                scope.emitCommonMutation(CommonMutation.AddDialog(loading))
+                val loading = ShowLoading()
+                scope.emitCommonMutation(AddDialog(loading))
 
                 delay(1000)
                 scope.emitMutation(SelectTemplateMutation.ToInitialized)
 
                 // 共通のSide Effectを使ってスナックバーを表示
                 scope.emitCommonUiEffect(
-                    CommonUiEffect.ShowSnackbar(
+                    ShowSnackbar(
                         CommonSnackbarData(message = CommonSnackbarMessage.Initialized)
                     )
                 )
 
                 // ローディングを完了ダイアログに置き換える
                 scope.emitCommonMutation(
-                    CommonMutation.ReplaceDialog(
-                        data = CommonDialogData.ShowConfirmDialog(
+                    ReplaceDialog(
+                        data = ShowConfirmDialog(
                             message = CommonDialogMessage.Initialized,
                             onDismiss = {
                                 logI("CommonMutation") { "confirm dialog on dismiss" }
@@ -49,6 +51,10 @@ class SelectTemplateActionProcessor @Inject constructor() :
                         fromData = loading
                     )
                 )
+            }
+
+            is SelectTemplateAction.NavigateToTemplate -> {
+                scope.emitUiEffect(SelectTemplateUiEffect.NavigateToTemplate(action.templateDiv))
             }
         }
     }

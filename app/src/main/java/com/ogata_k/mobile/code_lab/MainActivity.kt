@@ -36,7 +36,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            CodeLabTheme {
+            CodeLabTheme(
+                // @todo UI調整
+                dynamicColor = false,
+            ) {
                 AppMain(
                     globalUiController = globalUiController,
                     dialogQueue = viewModel.dialogQueue,

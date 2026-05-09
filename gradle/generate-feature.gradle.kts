@@ -242,7 +242,6 @@ tasks.register("generateFeature") {
                 import androidx.compose.foundation.layout.padding
                 import androidx.compose.material3.MaterialTheme
                 import androidx.compose.material3.Scaffold
-                import androidx.compose.material3.Text
                 import androidx.compose.material3.TopAppBar
                 import androidx.compose.material3.TopAppBarDefaults
                 import androidx.compose.runtime.Composable
@@ -251,7 +250,9 @@ tasks.register("generateFeature") {
                 import androidx.compose.ui.tooling.preview.Preview
                 import com.ogata_k.mobile.code_lab.R
                 import com.ogata_k.mobile.code_lab.ui.theme.CodeLabTheme
-                import com.ogata_k.mobile.code_lab.ui.widget.screen.ScreenContainer
+                import com.ogata_k.mobile.code_lab.ui.widget.text.BodyLargeText
+                import com.ogata_k.mobile.code_lab.ui.widget.text.TitleLargeText
+                import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicScaffold
                 
                 /**
                  * ${featureName} featureのメイン画面を表示するComposable関数
@@ -261,36 +262,20 @@ tasks.register("generateFeature") {
                     uiState: ${featureName}UiState,
                     onIntent: (${featureName}Intent) -> Unit,
                 ) {
-                    ScreenContainer {
-                        Scaffold(
-                            modifier = Modifier.fillMaxSize(),
-                            topBar = {
-                                TopAppBar(
-                                    colors = TopAppBarDefaults.topAppBarColors(
-                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                        titleContentColor = MaterialTheme.colorScheme.primary,
-                                    ), title = {
-                                        // @todo 必要ならタイトルを追加
-                                    })
-                            },
-                        ) { innerPadding ->
-                            Box(
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding)
-                            ) {
-                                Greeting(
-                                    name = uiState.toString(),
-                                )
-                            }
+                    BasicScaffold(
+                        // @todo 必要ならタイトルを追加
+                        title = null,
+                    ) { 
+                            Greeting(
+                                name = uiState.toString(),
+                            )
                         }
-                    }
                 }
                 
                 @Composable
                 fun Greeting(name: String, modifier: Modifier = Modifier) {
                     val appName: String = stringResource(R.string.app_name)
-                    Text(
+                    BodyLargeText(
                         text = "Hello ${'$'}name for ${'$'}appName!",
                         modifier = modifier
                     )

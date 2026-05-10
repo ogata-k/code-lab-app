@@ -28,6 +28,7 @@ fun SelectTemplateScreen(
 ) {
     BasicScaffold(
         title = stringResource(R.string.app_name),
+        onBack = null,
     ) {
         Box(
             modifier = Modifier.padding(

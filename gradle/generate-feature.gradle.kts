@@ -216,7 +216,8 @@ tasks.register("generateFeature") {
                  */
                 @Composable
                 fun ${featureName}Route(
-                    viewModel: ${featureName}ViewModel = hiltViewModel()
+                    viewModel: ${featureName}ViewModel = hiltViewModel(),
+                    onBack: (() -> Unit)?,
                 ) {
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                     
@@ -228,7 +229,8 @@ tasks.register("generateFeature") {
                     ) {
                         ${featureName}Screen(
                             uiState = uiState.featureUiState,
-                            onIntent = { viewModel.dispatchIntent(it) }
+                            onIntent = { viewModel.dispatchIntent(it) },
+                            onBack = onBack,
                         )
                     }
                 }
@@ -261,10 +263,12 @@ tasks.register("generateFeature") {
                 fun ${featureName}Screen(
                     uiState: ${featureName}UiState,
                     onIntent: (${featureName}Intent) -> Unit,
+                    onBack: (() -> Unit)?,
                 ) {
                     BasicScaffold(
                         // @todo 必要ならタイトルを追加
                         title = null,
+                        onBack = onBack,
                     ) { 
                             Greeting(
                                 name = uiState.toString(),

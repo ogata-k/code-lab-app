@@ -11,7 +11,8 @@ import com.ogata_k.mobile.code_lab.ui.widget.screen.AdaptiveRouteHost
  */
 @Composable
 fun SampleTemplateRoute(
-    viewModel: SampleTemplateViewModel = hiltViewModel()
+    viewModel: SampleTemplateViewModel = hiltViewModel(),
+    onBack: (() -> Unit)?,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -23,7 +24,8 @@ fun SampleTemplateRoute(
     ) {
         SampleTemplateScreen(
             uiState = uiState.featureUiState,
-            onIntent = { viewModel.dispatchIntent(it) }
+            onIntent = { viewModel.dispatchIntent(it) },
+            onBack = onBack,
         )
     }
 }

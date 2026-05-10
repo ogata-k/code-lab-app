@@ -156,7 +156,7 @@ fun SetupRouting() {
                 metadata = ListDetailSceneStrategy.listPane(
                     sceneKey = SceneKey.SelectTemplate,
                     detailPlaceholder = {
-                        BasicScaffold {
+                        BasicScaffold(onBack = null) {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center,
@@ -203,7 +203,11 @@ fun SetupRouting() {
                     sceneKey = SceneKey.SelectTemplate,
                 ),
             ) { _ ->
-                SampleTemplateRoute()
+                SampleTemplateRoute(
+                    onBack = {
+                        backStack.removeLastOrNull()
+                    }
+                )
             }
         },
     )

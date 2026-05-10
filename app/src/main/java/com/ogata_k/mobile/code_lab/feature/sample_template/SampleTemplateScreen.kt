@@ -19,9 +19,11 @@ import com.ogata_k.mobile.code_lab.ui.widget.text.BodyLargeText
 fun SampleTemplateScreen(
     uiState: SampleTemplateUiState,
     onIntent: (SampleTemplateIntent) -> Unit,
+    onBack: (() -> Unit)?,
 ) {
     BasicScaffold(
         title = TemplateDiv.Sample.name,
+        onBack = onBack,
     ) {
         Greeting(
             name = uiState.toString(),

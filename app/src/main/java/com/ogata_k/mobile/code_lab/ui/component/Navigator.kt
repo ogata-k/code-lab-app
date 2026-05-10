@@ -95,7 +95,7 @@ fun SetupRouting() {
     )
     val interactionSource = remember { MutableInteractionSource() }
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(
-        backNavigationBehavior = BackNavigationBehavior.PopUntilScaffoldValueChange,
+        backNavigationBehavior = BackNavigationBehavior.PopUntilCurrentDestinationChange,
         paneExpansionDragHandle = if (isSeparating) {
             null
         } else {

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -73,12 +74,20 @@ fun <UE : UiEffect> AdaptiveRouteHost(
                 val message = data.message.asString(context)
                 val label = data.actionLabel?.asString(context)
                 coroutineScope.launch {
-                    snackbarHostState.showSnackbar(
+                    val snackbarResult: SnackbarResult = snackbarHostState.showSnackbar(
                         message = message,
                         actionLabel = label,
                         withDismissAction = data.actionLabel != null,
                     )
-                    data.onAction?.invoke()
+                    when (snackbarResult) {
+                        SnackbarResult.Dismissed -> {
+                            data.onDismiss?.invoke()
+                        }
+
+                        SnackbarResult.ActionPerformed -> {
+                            data.onAction?.invoke()
+                        }
+                    }
                 }
             }
         }

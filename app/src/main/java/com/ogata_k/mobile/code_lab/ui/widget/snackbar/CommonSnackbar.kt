@@ -25,5 +25,6 @@ sealed interface CommonSnackbarLabel {
 data class CommonSnackbarData(
     val message: CommonSnackbarMessage,
     val actionLabel: CommonSnackbarLabel? = null,
-    val onAction: (() -> Unit)? = null
+    val onDismiss: (() -> Unit)? = null,
+    val onAction: (() -> Unit)? = null,
 )

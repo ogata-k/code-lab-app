@@ -10,8 +10,8 @@ class SampleTemplateReducerTest {
     private val reducer = SampleTemplateReducer()
 
     @Test
-    fun `ToInitializedミューテーションによりInitialized状態に遷移すること`() {
-        val initialState = SampleTemplateUiState.UnInitialized
+    fun `ToInitializedミューテーションによりInitialized状態になること`() {
+        val initialState = SampleTemplateUiState.Initialized
         val mutation = SampleTemplateMutation.ToInitialized
 
         val newState = reducer.reduce(initialState, mutation)

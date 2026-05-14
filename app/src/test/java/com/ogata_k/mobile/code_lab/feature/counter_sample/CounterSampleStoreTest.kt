@@ -15,28 +15,28 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class CounterSampleStoreTest {
     @Test
-    fun `初期状態がUnInitializedであること`() = runTest {
+    fun `初期状態のcountが0であること`() = runTest {
         val actionProcessor = CounterSampleActionProcessor()
         val store = CounterSampleStore(
             scope = backgroundScope,
-            initialState = CounterSampleUiState.UnInitialized,
+            initialState = CounterSampleUiState(count = 0),
             actionProcessor = actionProcessor,
             reducer = CounterSampleReducer(),
             globalUiController = mockk()
         )
 
         assertEquals(
-            ScreenState(featureUiState = CounterSampleUiState.UnInitialized),
+            ScreenState(featureUiState = CounterSampleUiState(count = 0)),
             store.uiState.value
         )
     }
 
     @Test
-    fun `Initializeアクションによって状態がInitializedに更新されること`() = runTest {
+    fun `Incrementアクションによってcountがちょうど一つ増加すること`() = runTest {
         val actionProcessor = CounterSampleActionProcessor()
         val store = CounterSampleStore(
             scope = backgroundScope,
-            initialState = CounterSampleUiState.UnInitialized,
+            initialState = CounterSampleUiState(count = 0),
             actionProcessor = actionProcessor,
             reducer = CounterSampleReducer(),
             globalUiController = mockk()
@@ -44,15 +44,15 @@ class CounterSampleStoreTest {
 
         store.uiState.test {
             assertEquals(
-                ScreenState(featureUiState = CounterSampleUiState.UnInitialized),
+                ScreenState(featureUiState = CounterSampleUiState(count = 0)),
                 awaitItem()
             )
 
-            store.dispatchAction(CounterSampleAction.Initialize)
+            store.dispatchAction(CounterSampleAction.Increment(1u))
 
             advanceUntilIdle()
             assertEquals(
-                ScreenState(featureUiState = CounterSampleUiState.Initialized),
+                ScreenState(featureUiState = CounterSampleUiState(count = 1)),
                 awaitItem()
             )
         }

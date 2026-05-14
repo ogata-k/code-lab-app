@@ -6,7 +6,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -33,23 +32,13 @@ class CounterSampleViewModelTest {
     }
 
     @Test
-    fun `初期化時にInitialized状態になること`() = runTest {
+    fun `初期化時にcountが0の状態であること`() = runTest {
         val actionProcessor = CounterSampleActionProcessor()
         val viewModel = CounterSampleViewModel(actionProcessor, mockk())
 
         viewModel.uiState.test {
-            // 初期状態がUnInitializedであることを確認
             assertEquals(
-                ScreenState(featureUiState = CounterSampleUiState.UnInitialized),
-                awaitItem()
-            )
-
-            // Initializeアクションが完了するまで待機
-            advanceUntilIdle()
-
-            // viewModel.init内でInitializeアクションが呼ばれる想定
-            assertEquals(
-                ScreenState(featureUiState = CounterSampleUiState.Initialized),
+                ScreenState(featureUiState = CounterSampleUiState(count = 0)),
                 awaitItem()
             )
         }

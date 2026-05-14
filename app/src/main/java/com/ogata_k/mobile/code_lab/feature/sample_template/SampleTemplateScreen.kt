@@ -1,15 +1,17 @@
 package com.ogata_k.mobile.code_lab.feature.sample_template
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import com.ogata_k.mobile.code_lab.R
 import com.ogata_k.mobile.code_lab.domain.enum.TemplateDiv
-import com.ogata_k.mobile.code_lab.ui.theme.CodeLabTheme
-import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicScaffold
-import com.ogata_k.mobile.code_lab.ui.widget.text.BodyLargeText
+import com.ogata_k.mobile.code_lab.ui.theme.SpacingXS
+import com.ogata_k.mobile.code_lab.ui.widget.list.item.BasicNavigationCardItem
+import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicTemplateDetailScaffold
 
 /**
  * SampleTemplate featureのメイン画面を表示するComposable関数
@@ -21,29 +23,21 @@ fun SampleTemplateScreen(
     onIntent: (SampleTemplateIntent) -> Unit,
     onBack: (() -> Unit)?,
 ) {
-    BasicScaffold(
+    BasicTemplateDetailScaffold(
         title = TemplateDiv.Sample.name,
         onBack = onBack,
     ) {
-        Greeting(
-            name = uiState.toString(),
-        )
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    val appName: String = stringResource(R.string.app_name)
-    BodyLargeText(
-        text = "Hello $name for $appName!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    CodeLabTheme {
-        Greeting("Android")
+        Box(
+            modifier = Modifier.padding(all = SpacingXS)
+        ) {
+            Column() {
+                BasicNavigationCardItem(
+                    itemName = stringResource(R.string.counter),
+                    navigate = {
+                        onIntent(SampleTemplateIntent.TapListItem)
+                    },
+                )
+            }
+        }
     }
 }

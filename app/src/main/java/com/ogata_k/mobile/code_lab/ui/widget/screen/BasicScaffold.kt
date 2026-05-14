@@ -29,10 +29,6 @@ fun BasicScaffold(
     onBack: (() -> Unit)?,
     content: @Composable () -> Unit,
 ) {
-    val adaptiveInfo = currentWindowAdaptiveInfoV2()
-    val directive = calculatePaneScaffoldDirective(adaptiveInfo)
-    val isSinglePane = directive.maxHorizontalPartitions == 1
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -47,7 +43,7 @@ fun BasicScaffold(
                     }
                 },
                 navigationIcon = {
-                    if (onBack != null && isSinglePane) {
+                    if (onBack != null) {
                         IconButton(onClick = onBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -68,4 +64,26 @@ fun BasicScaffold(
             content()
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+fun BasicTemplateDetailScaffold(
+    title: String? = null,
+    onBack: (() -> Unit)?,
+    content: @Composable () -> Unit,
+) {
+    val adaptiveInfo = currentWindowAdaptiveInfoV2()
+    val directive = calculatePaneScaffoldDirective(adaptiveInfo)
+    val isSinglePane = directive.maxHorizontalPartitions == 1
+
+    BasicScaffold(
+        title = title,
+        onBack = if (onBack != null && isSinglePane) {
+            onBack
+        } else {
+            null
+        },
+        content = content,
+    )
 }

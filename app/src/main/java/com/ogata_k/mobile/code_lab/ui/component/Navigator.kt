@@ -38,6 +38,7 @@ import androidx.navigation3.scene.SinglePaneSceneStrategy
 import androidx.navigation3.ui.NavDisplay
 import com.ogata_k.mobile.code_lab.R
 import com.ogata_k.mobile.code_lab.domain.enum.TemplateDiv
+import com.ogata_k.mobile.code_lab.feature.counter_sample.CounterSampleRoute
 import com.ogata_k.mobile.code_lab.feature.sample_template.SampleTemplateRoute
 import com.ogata_k.mobile.code_lab.feature.select_template.SelectTemplateRoute
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingS
@@ -59,6 +60,12 @@ sealed interface RouteNavKey : NavKey {
      */
     @Serializable
     data object SampleTemplate : RouteNavKey
+
+    /**
+     * カウンターサンプルのルーティング
+     */
+    @Serializable
+    data object CounterSample : RouteNavKey
 
     fun isSelectTemplateDetail(): Boolean {
         return listOf(SampleTemplate).contains(this)
@@ -204,6 +211,17 @@ fun SetupRouting() {
                 ),
             ) { _ ->
                 SampleTemplateRoute(
+                    onBack = {
+                        backStack.removeLastOrNull()
+                    },
+                    navigateToCounter = {
+                        backStack.add(RouteNavKey.CounterSample)
+                    }
+                )
+            }
+
+            entry<RouteNavKey.CounterSample> { _ ->
+                CounterSampleRoute(
                     onBack = {
                         backStack.removeLastOrNull()
                     }

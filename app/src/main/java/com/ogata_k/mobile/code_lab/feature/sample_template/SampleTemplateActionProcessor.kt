@@ -14,9 +14,8 @@ class SampleTemplateActionProcessor @Inject constructor() :
         scope: StoreScope<SampleTemplateUiState, SampleTemplateUiEffect, SampleTemplateIntent, SampleTemplateAction, SampleTemplateMutation>
     ) {
         when (action) {
-            is SampleTemplateAction.Initialize -> {
-                // TODO: 実際の初期化処理
-                scope.emitMutation(SampleTemplateMutation.ToInitialized)
+            is SampleTemplateAction.NavigateToCounter -> {
+                scope.emitUiEffect(SampleTemplateUiEffect.NavigateToCounter)
             }
         }
     }

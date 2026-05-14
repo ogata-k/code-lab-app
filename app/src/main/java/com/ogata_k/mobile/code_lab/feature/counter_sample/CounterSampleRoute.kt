@@ -1,4 +1,4 @@
-package com.ogata_k.mobile.code_lab.feature.sample_template
+package com.ogata_k.mobile.code_lab.feature.counter_sample
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -7,25 +7,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ogata_k.mobile.code_lab.ui.widget.screen.AdaptiveRouteHost
 
 /**
- * SampleTemplate featureのナビゲーションルートとなるComposable関数
+ * CounterSample featureのナビゲーションルートとなるComposable関数
  */
 @Composable
-fun SampleTemplateRoute(
-    viewModel: SampleTemplateViewModel = hiltViewModel(),
+fun CounterSampleRoute(
+    viewModel: CounterSampleViewModel = hiltViewModel(),
     onBack: (() -> Unit)?,
-    navigateToCounter: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     AdaptiveRouteHost(
         storeContainer = viewModel,
         onHandleUiEffect = { effect, snackbarHostState, context, scope ->
-            when (effect) {
-                SampleTemplateUiEffect.NavigateToCounter -> navigateToCounter()
-            }
+            // TODO: Handle effect
         },
     ) {
-        SampleTemplateScreen(
+        CounterSampleScreen(
             uiState = uiState.featureUiState,
             onIntent = { viewModel.dispatchIntent(it) },
             onBack = onBack,

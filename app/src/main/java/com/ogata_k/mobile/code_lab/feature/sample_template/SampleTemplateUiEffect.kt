@@ -5,4 +5,6 @@ import com.ogata_k.mobile.code_lab.core.mvi.UiEffect
 /**
  * SampleTemplate featureのUI副作用（ワンショットのイベント）
  */
-sealed interface SampleTemplateUiEffect : UiEffect
+sealed interface SampleTemplateUiEffect : UiEffect {
+    data object NavigateToCounter : SampleTemplateUiEffect
+}

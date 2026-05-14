@@ -1,4 +1,4 @@
-package com.ogata_k.mobile.code_lab.feature.sample_template
+package com.ogata_k.mobile.code_lab.feature.counter_sample
 
 import app.cash.turbine.test
 import com.ogata_k.mobile.code_lab.core.mvi.ScreenState
@@ -10,49 +10,49 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * SampleTemplateStoreのテスト
+ * CounterSampleStoreのテスト
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class SampleTemplateStoreTest {
+class CounterSampleStoreTest {
     @Test
     fun `初期状態がUnInitializedであること`() = runTest {
-        val actionProcessor = SampleTemplateActionProcessor()
-        val store = SampleTemplateStore(
+        val actionProcessor = CounterSampleActionProcessor()
+        val store = CounterSampleStore(
             scope = backgroundScope,
-            initialState = SampleTemplateUiState.UnInitialized,
+            initialState = CounterSampleUiState.UnInitialized,
             actionProcessor = actionProcessor,
-            reducer = SampleTemplateReducer(),
+            reducer = CounterSampleReducer(),
             globalUiController = mockk()
         )
 
         assertEquals(
-            ScreenState(featureUiState = SampleTemplateUiState.UnInitialized),
+            ScreenState(featureUiState = CounterSampleUiState.UnInitialized),
             store.uiState.value
         )
     }
 
     @Test
     fun `Initializeアクションによって状態がInitializedに更新されること`() = runTest {
-        val actionProcessor = SampleTemplateActionProcessor()
-        val store = SampleTemplateStore(
+        val actionProcessor = CounterSampleActionProcessor()
+        val store = CounterSampleStore(
             scope = backgroundScope,
-            initialState = SampleTemplateUiState.UnInitialized,
+            initialState = CounterSampleUiState.UnInitialized,
             actionProcessor = actionProcessor,
-            reducer = SampleTemplateReducer(),
+            reducer = CounterSampleReducer(),
             globalUiController = mockk()
         )
 
         store.uiState.test {
             assertEquals(
-                ScreenState(featureUiState = SampleTemplateUiState.UnInitialized),
+                ScreenState(featureUiState = CounterSampleUiState.UnInitialized),
                 awaitItem()
             )
 
-            store.dispatchAction(SampleTemplateAction.NavigateToCounter)
+            store.dispatchAction(CounterSampleAction.Initialize)
 
             advanceUntilIdle()
             assertEquals(
-                ScreenState(featureUiState = SampleTemplateUiState.Initialized),
+                ScreenState(featureUiState = CounterSampleUiState.Initialized),
                 awaitItem()
             )
         }

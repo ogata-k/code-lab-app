@@ -16,14 +16,11 @@ class SampleTemplateViewModel @Inject constructor(
 ) : BaseViewModel<SampleTemplateUiState, SampleTemplateUiEffect, SampleTemplateIntent, SampleTemplateAction, SampleTemplateMutation>() {
     override val store: SampleTemplateStore = SampleTemplateStore(
         scope = viewModelScope,
-        initialState = SampleTemplateUiState.UnInitialized,
+        initialState = SampleTemplateUiState.Initialized,
         actionProcessor = actionProcessor,
         reducer = SampleTemplateReducer(),
         globalUiController = globalUiController
     )
 
-    init {
-        // 初期データのロード
-        dispatchAction(SampleTemplateAction.Initialize)
-    }
+    // 追加の初期化処理はなし
 }

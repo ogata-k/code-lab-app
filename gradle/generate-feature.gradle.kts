@@ -307,6 +307,36 @@ tasks.register("generateFeature") {
 
 
         val testTemplates = mapOf(
+            "${featureName}ActionProcessorTest.kt" to """
+                package $packageName
+                
+                import com.ogata_k.mobile.code_lab.core.mvi.StoreScope
+                import io.mockk.coVerify
+                import io.mockk.mockk
+                import kotlinx.coroutines.ExperimentalCoroutinesApi
+                import kotlinx.coroutines.test.runTest
+                import org.junit.Test
+                
+                /**
+                 * ${featureName}ActionProcessorのテスト
+                 */
+                @OptIn(ExperimentalCoroutinesApi::class)
+                class ${featureName}ActionProcessorTest {
+                    private val actionProcessor = ${featureName}ActionProcessor()
+                    private val scope: StoreScope<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation> =
+                        mockk(relaxed = true)
+                
+                    @Test
+                    fun `InitializeアクションによってToInitializedミューテーションが発行されること`() = runTest {
+                        val action = ${featureName}Action.Initialize
+                
+                        actionProcessor.process(action, scope)
+                
+                        coVerify { scope.emitMutation(${featureName}Mutation.ToInitialized) }
+                    }
+                }
+            """.trimIndent(),
+
             "${featureName}StoreTest.kt" to """
                 package $packageName
                 

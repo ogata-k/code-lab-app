@@ -19,7 +19,7 @@ fun CounterSampleRoute(
     AdaptiveRouteHost(
         storeContainer = viewModel,
         onHandleUiEffect = { effect, snackbarHostState, context, scope ->
-            // TODO: Handle effect
+            // None
         },
     ) {
         CounterSampleScreen(

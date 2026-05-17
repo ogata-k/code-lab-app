@@ -4,6 +4,11 @@
     <!-- 画面タイトル -->
     <string name="counter_screen_title">カウンター</string>
 
+    <!-- セクションタイトル -->
+    <string name="slide_duration_section_title">スライド速度</string>
+    <string name="fade_duration_section_title">フェードイン速度</string>
+    <string name="slide_offset_divisor_section_title">スライド量</string>
+
     <!-- ボタン -->
     <string name="btn_close">閉じる</string>
     <string name="btn_back">戻る</string>
@@ -14,11 +19,20 @@
     <string name="dialog_title_error">エラー</string>
     <string name="dialog_title_confirm">確認</string>
 
+    <!-- スナックバー -->
+    <string name="snackbar_initialized">Initialized</string>
+    <string name="snackbar_value_out_of_range">範囲外の値です</string>
+
     <!-- プレースホルダー -->
     <string name="placeholder_select_template">テンプレートを選択してください</string>
 
     <!-- エラーメッセージ -->
     <string name="error_unexpected">予期せぬエラーが発生しました。</string>
+
+    <!-- フォーム -->
+    <string name="slide_offset_divisor_full">全高</string>
+    <string name="slide_offset_divisor_half">半分</string>
+    <string name="slide_offset_divisor_subtle">控えめ</string>
 
     <!-- その他 -->
     <string name="counter">カウンター</string>

@@ -1,8 +1,10 @@
 package com.ogata_k.mobile.code_lab.feature.select_template
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.runtime.Composable
@@ -10,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.ogata_k.mobile.code_lab.R
 import com.ogata_k.mobile.code_lab.domain.enum.TemplateDiv
-import com.ogata_k.mobile.code_lab.ui.theme.SpacingXS
+import com.ogata_k.mobile.code_lab.ui.theme.SpacingS
 import com.ogata_k.mobile.code_lab.ui.widget.list.item.BasicNavigationCardItem
 import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicScaffold
 
@@ -27,17 +29,20 @@ fun SelectTemplateScreen(
         title = stringResource(R.string.app_name),
         onBack = null,
     ) {
-        Box(
-            modifier = Modifier.padding(all = SpacingXS)
+        val scrollState = rememberScrollState()
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(SpacingS),
         ) {
-            Column() {
-                BasicNavigationCardItem(
-                    itemName = TemplateDiv.Sample.name,
-                    navigate = {
-                        onIntent(SelectTemplateIntent.TapListItem(TemplateDiv.Sample))
-                    },
-                )
-            }
+            BasicNavigationCardItem(
+                itemName = TemplateDiv.Sample.name,
+                navigate = {
+                    onIntent(SelectTemplateIntent.TapListItem(TemplateDiv.Sample))
+                },
+            )
         }
     }
 }

@@ -76,13 +76,14 @@ fun CounterSampleScreen(
 
         Column(
             modifier = Modifier
-                .padding(vertical = SpacingM)
                 .fillMaxSize()
-                .verticalScroll(scrollState),
+                .verticalScroll(scrollState)
+                .padding(SpacingS),
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = SpacingS)
                     .height(SpacingXXXXL),
                 contentAlignment = Alignment.Center,
             ) {

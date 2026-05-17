@@ -30,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -179,26 +180,9 @@ fun SetupRouting() {
             ) { _ ->
                 SelectTemplateRoute(
                     navigateToTemplate = { templateDiv ->
-                        fun navigateToDetail(key: RouteNavKey) {
-                            var popped = 0
-                            while (true) {
-                                val lastRoute = backStack.lastOrNull()
-                                if (lastRoute != null && lastRoute is RouteNavKey && lastRoute.isSelectTemplateDetail()) {
-                                    if (lastRoute == key) {
-                                        // すでに画面に乗っているので画面遷移処理の必要なし
-                                        return
-                                    }
-                                    backStack.removeLastOrNull()
-                                    popped += 1
-                                    continue
-                                }
-                                break
-                            }
-                            backStack.add(key)
-                        }
                         when (templateDiv) {
                             TemplateDiv.Sample -> {
-                                navigateToDetail(RouteNavKey.SampleTemplate)
+                                navigateToTemplateDetail(RouteNavKey.SampleTemplate, backStack)
                             }
                         }
                     }
@@ -229,4 +213,25 @@ fun SetupRouting() {
             }
         },
     )
+}
+
+/**
+ * テンプレート選択後の詳細画面への遷移メソッド
+ */
+private fun navigateToTemplateDetail(key: RouteNavKey, backStack: NavBackStack<NavKey>) {
+    var popped = 0
+    while (true) {
+        val lastRoute = backStack.lastOrNull()
+        if (lastRoute != null && lastRoute is RouteNavKey && lastRoute.isSelectTemplateDetail()) {
+            if (lastRoute == key) {
+                // すでに画面に乗っているので画面遷移処理の必要なし
+                return
+            }
+            backStack.removeLastOrNull()
+            popped += 1
+            continue
+        }
+        break
+    }
+    backStack.add(key)
 }

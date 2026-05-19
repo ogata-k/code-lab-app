@@ -61,7 +61,7 @@ sealed interface RouteNavKey : NavKey {
      * アプリでよく見るサンプルテンプレートのルーティング
      */
     @Serializable
-    data object SampleTemplate : RouteNavKey
+    data object SampleTemplate : RouteNavKey, SelectTemplateDetail
 
     /**
      * カウンターサンプルのルーティング
@@ -70,8 +70,11 @@ sealed interface RouteNavKey : NavKey {
     data object CounterSample : RouteNavKey
 
     fun isSelectTemplateDetail(): Boolean {
-        return listOf(SampleTemplate).contains(this)
+        return this is SelectTemplateDetail
     }
+
+    /** テンプレート選択の詳細画面であることを示すマーカーインターフェース */
+    sealed interface SelectTemplateDetail : RouteNavKey
 }
 
 sealed interface SceneKey {

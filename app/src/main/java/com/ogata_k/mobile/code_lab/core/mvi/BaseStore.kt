@@ -1,6 +1,7 @@
 package com.ogata_k.mobile.code_lab.core.mvi
 
 import com.ogata_k.mobile.code_lab.common.logE
+import com.ogata_k.mobile.code_lab.common.logI
 import com.ogata_k.mobile.code_lab.common.logV
 import com.ogata_k.mobile.code_lab.core.mvi.middleware.MviMiddlewareDefaults
 import com.ogata_k.mobile.code_lab.global.GlobalUiController
@@ -55,17 +56,49 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
      */
     override val commonUiEffect: Flow<CommonUiEffect> = _commonUiEffect.receiveAsFlow()
 
+    // --- Scope Implementation ---
+    // 他のコンポーネントが依存するため早めに初期化する
+
+    /**
+     * ActionProcessorに渡されるスコープの実装。
+     */
+    protected val storeScope = object : StoreScope<US, UE, I, A, M> {
+        override fun getUiStateSnapshot(): US = _uiState.value.featureUiState
+        override fun getScreenStateSnapshot(): ScreenState<US> = _uiState.value
+        override suspend fun emitUiEffect(effect: UE) {
+            this.ensureActive()
+            this@BaseStore.emitUiEffect(effect)
+        }
+
+        override suspend fun emitCommonUiEffect(effect: CommonUiEffect) {
+            this.ensureActive()
+            this@BaseStore.emitCommonUiEffect(effect)
+        }
+
+        override suspend fun emitGlobalUiEffect(effect: GlobalUiEffect) {
+            this.ensureActive()
+            this@BaseStore.globalUiController.sendUiEffect(effect)
+        }
+
+        override suspend fun emitMutation(mutation: M) {
+            this.ensureActive()
+            this@BaseStore.emitMutation(mutation)
+        }
+
+        override suspend fun emitCommonMutation(mutation: CommonMutation) {
+            this.ensureActive()
+            this@BaseStore.emitCommonMutation(mutation)
+        }
+
+        override fun dispatchIntent(intent: I) = this@BaseStore.dispatchIntent(intent)
+    }
+
     // --- Intent Pipeline ---
 
     /**
      * Intentを直列で呼び出すためのChannel
      */
     protected val intentChannel = Channel<I>(capacity = Channel.BUFFERED)
-
-    /**
-     * Intentを直列で呼び出すJob
-     */
-    private var intentLoopJob: Job? = null
 
     /**
      * Intentのミドルウェア一覧
@@ -101,12 +134,9 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
      * Intentの入口。Channel経由で順次処理される。
      */
     override fun dispatchIntent(intent: I) {
-        if (intentLoopJob == null) {
-            intentLoopJob = scope.launch {
-                for (target in intentChannel) {
-                    executeIntentPipeline(target)
-                }
-            }
+        if (intentLoopJob.isCancelled) {
+            logI("IntentChannel") { "Canceled to dispatch intent: $intent" }
+            return
         }
 
         val result = intentChannel.trySend(intent)
@@ -120,6 +150,7 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
      */
     private suspend fun executeIntentPipeline(intent: I) = intentChain(intent)
 
+
     // --- Action Pipeline ---
 
     /**
@@ -128,15 +159,25 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
     protected val actionChannel = Channel<A>(capacity = Channel.BUFFERED)
 
     /**
-     * Actionを直列で呼び出すJob
-     */
-    private var actionLoopJob: Job? = null
-
-    /**
      * Actionのミドルウェアの一覧
      */
     protected val actionMiddlewares: List<ActionMiddleware<US, A>> =
         MviMiddlewareDefaults.defaultActionMiddlewares<US, A>() + additionalActionMiddlewares
+
+    /**
+     * ExecutionStrategy.Sequential戦略で、Actionを直列にするためにキューイングするChannelの管理用Map
+     */
+    private val sequentialChannels = ConcurrentHashMap<ExecutionKey, Channel<A>>()
+
+    /**
+     * ExecutionStrategy.Sequential戦略で、Actionを直列にするためにキューイングするChannel実行のJobの管理用Map
+     */
+    private val sequentialWorkers = ConcurrentHashMap<ExecutionKey, Job>()
+
+    /**
+     * ExecutionStrategy.LatestOnly戦略で、最新のみActionのみを処理するようにしたJobの管理用Map
+     */
+    private val latestActionJobs = ConcurrentHashMap<ExecutionKey, Job>()
 
     /**
      * Actionのミドルウェアのハンドラー。
@@ -161,21 +202,9 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
      * Actionの唯一の入口。
      */
     override fun dispatchAction(action: A) {
-        if (actionLoopJob == null) {
-            actionLoopJob = scope.launch {
-                for (target in actionChannel) {
-                    try {
-                        executeAction(target)
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Throwable) {
-                        logE(
-                            "ActionChannel",
-                            e
-                        ) { "Critical error in action loop for action: $target" }
-                    }
-                }
-            }
+        if (actionLoopJob.isCancelled) {
+            logI("ActionChannel") { "Canceled dispatch action: $action" }
+            return
         }
 
         val result = actionChannel.trySend(action)
@@ -183,21 +212,6 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
             logE("ActionChannel") { "Failed to dispatch action: $action" }
         }
     }
-
-    /**
-     * ExecutionStrategy.Sequential戦略で、Actionを直列にするためにキューイングするChannelの管理用Map
-     */
-    private val sequentialChannels = ConcurrentHashMap<ExecutionKey, Channel<A>>()
-
-    /**
-     * ExecutionStrategy.Sequential戦略で、Actionを直列にするためにキューイングするChannel実行のJobの管理用Map
-     */
-    private val sequentialWorkers = ConcurrentHashMap<ExecutionKey, Job>()
-
-    /**
-     * ExecutionStrategy.LatestOnly戦略で、最新のみActionのみを処理するようにしたJobの管理用Map
-     */
-    private val latestActionJobs = ConcurrentHashMap<ExecutionKey, Job>()
 
     /**
      * Actionの戦略に応じてActionを処理するパイプラインを実行する。
@@ -212,11 +226,12 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
 
             is ExecutionStrategy.Sequential -> {
                 val key = strategy.key
-                val channel: Channel<A> = sequentialChannels.getOrPut(key) {
-                    Channel(Channel.BUFFERED)
+                val channel: Channel<A> = sequentialChannels.computeIfAbsent(key) {
+                    // UNLIMITEDにすることで、channel.sendでバッファ不足ならずサスペンド（停止）しなくなる
+                    Channel(Channel.UNLIMITED)
                 }
 
-                sequentialWorkers.getOrPut(key) {
+                sequentialWorkers.computeIfAbsent(key) {
                     scope.launch {
                         for (queuedAction in channel) {
                             runCatchActionBlock { actionChain(queuedAction, storeScope) }
@@ -228,52 +243,17 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
             }
 
             is ExecutionStrategy.LatestOnly -> {
-                latestActionJobs[strategy.key]?.cancel()
+                latestActionJobs.compute(strategy.key) { _, oldJob ->
+                    oldJob?.cancel()
 
-                val job = scope.launch {
-                    val wrappedStoreScope = object : StoreScope<US, UE, I, A, M> {
-                        override fun getUiStateSnapshot(): US =
-                            storeScope.getUiStateSnapshot()
-
-                        override fun getScreenStateSnapshot(): ScreenState<US> =
-                            storeScope.getScreenStateSnapshot()
-
-                        override suspend fun emitUiEffect(effect: UE) {
-                            storeScope.ensureActive()
-                            storeScope.emitUiEffect(effect)
+                    scope.launch {
+                        runCatchActionBlock { actionChain(action, storeScope) }
+                    }.also { newJob ->
+                        newJob.invokeOnCompletion {
+                            // remove(key, value) は「今の値が newJob である場合のみ削除」をアトミックに行う
+                            // これにより、後続のActionによって登録された新しいJobを誤って消すことがない
+                            latestActionJobs.remove(strategy.key, newJob)
                         }
-
-                        override suspend fun emitCommonUiEffect(effect: CommonUiEffect) {
-                            storeScope.ensureActive()
-                            storeScope.emitCommonUiEffect(effect)
-                        }
-
-                        override suspend fun emitGlobalUiEffect(effect: GlobalUiEffect) {
-                            storeScope.ensureActive()
-                            storeScope.emitGlobalUiEffect(effect)
-                        }
-
-                        override suspend fun emitMutation(mutation: M) {
-                            storeScope.ensureActive()
-                            storeScope.emitMutation(mutation)
-                        }
-
-                        override suspend fun emitCommonMutation(mutation: CommonMutation) {
-                            storeScope.ensureActive()
-                            storeScope.emitCommonMutation(mutation)
-                        }
-
-                        override fun dispatchIntent(intent: I) {
-                            storeScope.dispatchIntent(intent)
-                        }
-                    }
-                    runCatchActionBlock { actionChain(action, wrappedStoreScope) }
-                }
-
-                latestActionJobs[strategy.key] = job
-                job.invokeOnCompletion {
-                    if (latestActionJobs[strategy.key] == job) {
-                        latestActionJobs.remove(strategy.key)
                     }
                 }
             }
@@ -290,6 +270,42 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
             throw e
         } catch (e: Throwable) {
             logE("ActionPipeline", e) { "Occurred Unexpected Exception" }
+        }
+    }
+
+    // --- Main Loop Jobs ---
+    // 依存する全てのプロパティ・メソッドが準備できた後に起動する。
+
+    /**
+     * Intentを直列で呼び出すJob
+     */
+    private val intentLoopJob: Job = scope.launch {
+        for (target in intentChannel) {
+            try {
+                executeIntentPipeline(target)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                logE("IntentChannel", e) { "Failed to process intent: $target" }
+            }
+        }
+    }
+
+    /**
+     * Actionを直列で呼び出すJob
+     */
+    private val actionLoopJob: Job = scope.launch {
+        for (target in actionChannel) {
+            try {
+                executeAction(target)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                logE(
+                    "ActionChannel",
+                    e
+                ) { "Critical error in action loop for action: $target" }
+            }
         }
     }
 
@@ -392,6 +408,8 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
     /**
      * 破棄処理。
      * メモリリーク対策として最低限、各種Channelのクローズと実行中のJobのキャンセルを行う。
+     * scopeがviewModelScopeのような「ViewModelと運命を共にするスコープ」である場合、通常はそのスコープ自体がキャンセルされるため、Jobも自動的にキャンセルされる。
+     * 現在の onClearedではscopeがもっと長い寿命を持つ場合も一応想定して「二重の安全策」として保険をかけている。
      */
     fun onCleared() {
         intentChannel.close()
@@ -400,36 +418,13 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
         _commonUiEffect.close()
         sequentialChannels.values.forEach { it.close() }
 
-        intentLoopJob?.cancel()
-        actionLoopJob?.cancel()
+        intentLoopJob.cancel()
+        actionLoopJob.cancel()
         sequentialWorkers.values.forEach { it.cancel() }
         latestActionJobs.values.forEach { it.cancel() }
 
         sequentialChannels.clear()
         sequentialWorkers.clear()
         latestActionJobs.clear()
-    }
-
-    // --- Scope Implementation ---
-
-    /**
-     * ActionProcessorに渡されるスコープの実装。
-     */
-    protected val storeScope = object : StoreScope<US, UE, I, A, M> {
-        override fun getUiStateSnapshot(): US = _uiState.value.featureUiState
-        override fun getScreenStateSnapshot(): ScreenState<US> = _uiState.value
-        override suspend fun emitUiEffect(effect: UE) = this@BaseStore.emitUiEffect(effect)
-        override suspend fun emitCommonUiEffect(effect: CommonUiEffect) =
-            this@BaseStore.emitCommonUiEffect(effect)
-        override suspend fun emitGlobalUiEffect(effect: GlobalUiEffect) =
-            this@BaseStore.globalUiController.sendUiEffect(effect)
-
-        override suspend fun emitMutation(mutation: M) =
-            this@BaseStore.emitMutation(mutation)
-
-        override suspend fun emitCommonMutation(mutation: CommonMutation) =
-            this@BaseStore.emitCommonMutation(mutation)
-
-        override fun dispatchIntent(intent: I) = this@BaseStore.dispatchIntent(intent)
     }
 }

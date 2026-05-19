@@ -43,7 +43,7 @@ import com.ogata_k.mobile.code_lab.feature.counter_sample.CounterSampleRoute
 import com.ogata_k.mobile.code_lab.feature.sample_template.SampleTemplateRoute
 import com.ogata_k.mobile.code_lab.feature.select_template.SelectTemplateRoute
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingS
-import com.ogata_k.mobile.code_lab.ui.theme.SpacingXS
+import com.ogata_k.mobile.code_lab.ui.theme.SpacingXXS
 import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicScaffold
 import com.ogata_k.mobile.code_lab.ui.widget.text.BodyLargeText
 import kotlinx.serialization.Serializable
@@ -111,7 +111,7 @@ fun SetupRouting() {
                 Box(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .width(SpacingXS),
+                        .width(SpacingXXS),
                     contentAlignment = Alignment.Center
                 ) {
                     VerticalDragHandle(

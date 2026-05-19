@@ -18,8 +18,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingM
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingS
-import com.ogata_k.mobile.code_lab.ui.theme.SpacingXS
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXXL
+import com.ogata_k.mobile.code_lab.ui.theme.SpacingXXS
 import com.ogata_k.mobile.code_lab.ui.widget.text.BodyMediumText
 import com.ogata_k.mobile.code_lab.ui.widget.text.ButtonMediumText
 import com.ogata_k.mobile.code_lab.ui.widget.text.TitleLargeText
@@ -91,7 +91,7 @@ fun LoadingDialog(
         Surface(
             shape = RoundedCornerShape(SpacingS),
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = SpacingXS
+            tonalElevation = SpacingXXS
         ) {
             Box(
                 contentAlignment = Alignment.Center,

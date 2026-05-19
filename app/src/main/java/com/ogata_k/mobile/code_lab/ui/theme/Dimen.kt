@@ -4,8 +4,9 @@ import androidx.compose.ui.unit.dp
 
 val NoSpacing = 0.dp
 
-val SpacingXXS = 4.dp
-val SpacingXS = 8.dp
+val SpacingXXXS = 4.dp
+val SpacingXXS = 8.dp
+val SpacingXS = 12.dp
 val SpacingS = 16.dp
 val SpacingM = 24.dp
 val SpacingL = 32.dp

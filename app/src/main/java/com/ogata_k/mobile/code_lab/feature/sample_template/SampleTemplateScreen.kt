@@ -1,5 +1,6 @@
 package com.ogata_k.mobile.code_lab.feature.sample_template
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -12,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import com.ogata_k.mobile.code_lab.R
 import com.ogata_k.mobile.code_lab.domain.enum.TemplateDiv
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingS
+import com.ogata_k.mobile.code_lab.ui.theme.SpacingXS
 import com.ogata_k.mobile.code_lab.ui.widget.list.item.BasicNavigationCardItem
 import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicTemplateDetailScaffold
 
@@ -36,6 +38,7 @@ fun SampleTemplateScreen(
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(SpacingS),
+            verticalArrangement = Arrangement.spacedBy(SpacingXS),
         ) {
             BasicNavigationCardItem(
                 itemName = stringResource(R.string.counter),

@@ -41,6 +41,7 @@ import com.ogata_k.mobile.code_lab.ui.theme.FontSizeM
 import com.ogata_k.mobile.code_lab.ui.theme.FontSizeXXXXL
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingM
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingS
+import com.ogata_k.mobile.code_lab.ui.theme.SpacingXS
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXXXXL
 import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicScaffold
 import com.ogata_k.mobile.code_lab.ui.widget.text.HeadlineSmallText
@@ -79,6 +80,7 @@ fun CounterSampleScreen(
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(SpacingS),
+            verticalArrangement = Arrangement.spacedBy(SpacingXS),
         ) {
             Box(
                 modifier = Modifier

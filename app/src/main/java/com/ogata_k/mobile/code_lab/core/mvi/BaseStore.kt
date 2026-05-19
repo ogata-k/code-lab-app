@@ -212,7 +212,7 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
 
             is ExecutionStrategy.Sequential -> {
                 val key = strategy.key
-                val channel = sequentialChannels.getOrPut(key) {
+                val channel: Channel<A> = sequentialChannels.getOrPut(key) {
                     Channel(Channel.BUFFERED)
                 }
 

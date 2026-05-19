@@ -1,7 +1,7 @@
 package com.ogata_k.mobile.code_lab.core.mvi.middleware.action
 
 import com.ogata_k.mobile.code_lab.common.ObjectFormatter
-import com.ogata_k.mobile.code_lab.common.logV
+import com.ogata_k.mobile.code_lab.common.logI
 import com.ogata_k.mobile.code_lab.core.mvi.Action
 import com.ogata_k.mobile.code_lab.core.mvi.ActionMiddleware
 import com.ogata_k.mobile.code_lab.core.mvi.UiState
@@ -19,7 +19,7 @@ class PerformanceActionMiddleware<US : UiState, A : Action> : ActionMiddleware<U
         next(action)
         val endTime = System.currentTimeMillis()
         val duration = endTime - startTime
-        logV("PerformanceMiddleware") {
+        logI("ActionMiddleware") {
             "Action ${
                 ObjectFormatter.formatAsSimple(
                     action

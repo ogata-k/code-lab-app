@@ -2,7 +2,7 @@ package com.ogata_k.mobile.code_lab.core.mvi.middleware
 
 import android.os.SystemClock
 import com.ogata_k.mobile.code_lab.common.ObjectFormatter
-import com.ogata_k.mobile.code_lab.common.logV
+import com.ogata_k.mobile.code_lab.common.logI
 import com.ogata_k.mobile.code_lab.core.mvi.Action
 import com.ogata_k.mobile.code_lab.core.mvi.Intent
 import com.ogata_k.mobile.code_lab.core.mvi.IntentMiddleware
@@ -108,7 +108,7 @@ class ThrottleIntentMiddleware<
             return
         }
 
-        logV("IntentMiddleware") {
+        logI("IntentMiddleware") {
             "Skipped by Throttle(${throttleIntent.kind}) Intent: ${
                 ObjectFormatter.formatAsSimple(
                     intent

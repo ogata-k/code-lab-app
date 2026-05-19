@@ -1,5 +1,6 @@
 package com.ogata_k.mobile.code_lab.core.mvi.middleware.intent
 
+import com.ogata_k.mobile.code_lab.common.ObjectFormatter
 import com.ogata_k.mobile.code_lab.common.logV
 import com.ogata_k.mobile.code_lab.core.mvi.Action
 import com.ogata_k.mobile.code_lab.core.mvi.Intent
@@ -16,7 +17,13 @@ class LoggingIntentMiddleware<US : UiState, I : Intent<A>, A : Action> :
         intent: I,
         next: suspend (I) -> Unit
     ) {
-        logV("IntentMiddleware") { "Dispatching Intent: $intent" }
+        logV("IntentMiddleware") {
+            "Dispatching Intent: ${
+                ObjectFormatter.formatAsSimple(
+                    intent
+                )
+            }"
+        }
         next(intent)
     }
 }

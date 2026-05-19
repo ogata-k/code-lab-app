@@ -1,5 +1,6 @@
 package com.ogata_k.mobile.code_lab.core.mvi
 
+import com.ogata_k.mobile.code_lab.common.ObjectFormatter
 import com.ogata_k.mobile.code_lab.common.logE
 import com.ogata_k.mobile.code_lab.common.logI
 import com.ogata_k.mobile.code_lab.common.logV
@@ -135,13 +136,25 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
      */
     override fun dispatchIntent(intent: I) {
         if (intentLoopJob.isCancelled) {
-            logI("IntentChannel") { "Canceled to dispatch intent: $intent" }
+            logI("IntentChannel") {
+                "Canceled to dispatch intent: ${
+                    ObjectFormatter.formatAsSimple(
+                        intent
+                    )
+                }"
+            }
             return
         }
 
         val result = intentChannel.trySend(intent)
         if (result.isFailure) {
-            logE("IntentChannel") { "Failed to dispatch intent: $intent" }
+            logE("IntentChannel") {
+                "Failed to dispatch intent: ${
+                    ObjectFormatter.formatAsSimple(
+                        intent
+                    )
+                }"
+            }
         }
     }
 
@@ -203,13 +216,25 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
      */
     override fun dispatchAction(action: A) {
         if (actionLoopJob.isCancelled) {
-            logI("ActionChannel") { "Canceled dispatch action: $action" }
+            logI("ActionChannel") {
+                "Canceled dispatch action: ${
+                    ObjectFormatter.formatAsSimple(
+                        action
+                    )
+                }"
+            }
             return
         }
 
         val result = actionChannel.trySend(action)
         if (result.isFailure) {
-            logE("ActionChannel") { "Failed to dispatch action: $action" }
+            logE("ActionChannel") {
+                "Failed to dispatch action: ${
+                    ObjectFormatter.formatAsSimple(
+                        action
+                    )
+                }"
+            }
         }
     }
 
@@ -286,7 +311,10 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
-                logE("IntentChannel", e) { "Failed to process intent: $target" }
+                logE(
+                    "IntentChannel",
+                    e
+                ) { "Failed to process intent: ${ObjectFormatter.formatAsSimple(target)}" }
             }
         }
     }
@@ -304,7 +332,13 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
                 logE(
                     "ActionChannel",
                     e
-                ) { "Critical error in action loop for action: $target" }
+                ) {
+                    "Critical error in action loop for action: ${
+                        ObjectFormatter.formatAsSimple(
+                            target
+                        )
+                    }"
+                }
             }
         }
     }
@@ -315,7 +349,7 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
      * UI Effectを通知する。
      */
     protected suspend fun emitUiEffect(effect: UE) {
-        logV("Store") { "emit UiEffect: $effect" }
+        logV("Store") { "emit UiEffect: ${ObjectFormatter.formatAsSimple(effect)}" }
         _uiEffect.send(effect)
     }
 
@@ -323,7 +357,7 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
      * 共通のUI Effectを通知する。
      */
     protected suspend fun emitCommonUiEffect(effect: CommonUiEffect) {
-        logV("Store") { "emit CommonUiEffect: $effect" }
+        logV("Store") { "emit CommonUiEffect: ${ObjectFormatter.formatAsSimple(effect)}" }
         _commonUiEffect.send(effect)
     }
 
@@ -334,7 +368,11 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
         _uiState.update { currentScreenState ->
             val nextFeatureState = reducer.reduce(currentScreenState.featureUiState, mutation)
             logV("Store") {
-                "emit Mutation: $mutation, from UiState: ${currentScreenState.featureUiState}, to UiState: $nextFeatureState"
+                "emit Mutation: ${ObjectFormatter.formatAsSimple(mutation)}, from UiState: ${
+                    ObjectFormatter.formatAsSimple(
+                        currentScreenState.featureUiState
+                    )
+                }, to UiState: ${ObjectFormatter.formatAsSimple(nextFeatureState)}"
             }
             currentScreenState.copy(featureUiState = nextFeatureState)
         }
@@ -344,7 +382,7 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
      * 共通のMutationを適用する。
      */
     protected suspend fun emitCommonMutation(mutation: CommonMutation) {
-        logV("Store") { "emit CommonMutation: $mutation" }
+        logV("Store") { "emit CommonMutation: ${ObjectFormatter.formatAsSimple(mutation)}" }
         _uiState.update { currentScreenState ->
             val nextScreenState = when (mutation) {
                 is CommonMutation.AddDialog -> {
@@ -378,7 +416,11 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
                 }
             }
             logV("Store") {
-                "emit CommonMutation: $mutation, from ScreenState: $currentScreenState, to ScreenState: $nextScreenState"
+                "emit CommonMutation: ${ObjectFormatter.formatAsSimple(mutation)}, from ScreenState: ${
+                    ObjectFormatter.formatAsSimple(
+                        currentScreenState
+                    )
+                }, to ScreenState: ${ObjectFormatter.formatAsSimple(nextScreenState)}"
             }
             nextScreenState
         }

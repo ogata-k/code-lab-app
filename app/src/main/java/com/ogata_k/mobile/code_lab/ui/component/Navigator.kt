@@ -148,7 +148,7 @@ fun SetupRouting() {
             .background(MaterialTheme.colorScheme.inverseOnSurface),
         backStack = backStack,
         onBack = {
-            backStack.removeLastOrNull()
+            popLatest(backStack)
         },
         entryDecorators = listOf(
             // Entryを画面回転で破棄されないようにsaveableに保存させる
@@ -183,7 +183,7 @@ fun SetupRouting() {
                     navigateToTemplate = { templateDiv ->
                         when (templateDiv) {
                             TemplateDiv.Sample -> {
-                                navigateToTemplateDetail(RouteNavKey.SampleTemplate, backStack)
+                                navigateToTemplateDetail(backStack, RouteNavKey.SampleTemplate)
                             }
                         }
                     }
@@ -197,11 +197,10 @@ fun SetupRouting() {
             ) { _ ->
                 SampleTemplateRoute(
                     onBack = {
-                        backStack.removeLastOrNull()
+                        popLatest(backStack)
                     },
                     navigateToCounter = {
-                        backStack.add(RouteNavKey.CounterSample)
-                        logI("NAVIGATOR") { backStack.joinToString("->") { it.toString() } }
+                        navigate(backStack, RouteNavKey.CounterSample)
                     }
                 )
             }
@@ -209,7 +208,7 @@ fun SetupRouting() {
             entry<RouteNavKey.CounterSample> { _ ->
                 CounterSampleRoute(
                     onBack = {
-                        backStack.removeLastOrNull()
+                        popLatest(backStack)
                     }
                 )
             }
@@ -218,9 +217,17 @@ fun SetupRouting() {
 }
 
 /**
+ * 指定したkeyに遷移
+ */
+private fun navigate(backStack: NavBackStack<NavKey>, key: RouteNavKey) {
+    backStack.add(key)
+    logI("Navigator") { "navigated: " + backStack.joinToString("->") { it.toString() } }
+}
+
+/**
  * テンプレート選択後の詳細画面への遷移メソッド
  */
-private fun navigateToTemplateDetail(key: RouteNavKey, backStack: NavBackStack<NavKey>) {
+private fun navigateToTemplateDetail(backStack: NavBackStack<NavKey>, key: RouteNavKey) {
     var popped = 0
     while (true) {
         val lastRoute = backStack.lastOrNull()
@@ -235,5 +242,14 @@ private fun navigateToTemplateDetail(key: RouteNavKey, backStack: NavBackStack<N
         }
         break
     }
-    backStack.add(key)
+
+    navigate(backStack, key)
+}
+
+/**
+ * 直近一つをスタックから取り除く
+ */
+private fun popLatest(backStack: NavBackStack<NavKey>) {
+    backStack.removeLastOrNull()
+    logI("Navigator") { "popped: " + backStack.joinToString("->") { it.toString() } }
 }

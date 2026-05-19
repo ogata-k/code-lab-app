@@ -1,4 +1,4 @@
-package com.ogata_k.mobile.code_lab.core.mvi.middleware
+package com.ogata_k.mobile.code_lab.core.mvi.middleware.intent
 
 import android.os.SystemClock
 import com.ogata_k.mobile.code_lab.common.ObjectFormatter

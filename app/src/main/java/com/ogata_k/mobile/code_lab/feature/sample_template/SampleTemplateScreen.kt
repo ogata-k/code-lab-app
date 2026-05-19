@@ -46,6 +46,13 @@ fun SampleTemplateScreen(
                     onIntent(SampleTemplateIntent.TapListItem)
                 },
             )
+            // TODO: remove
+            BasicNavigationCardItem(
+                itemName = stringResource(R.string.counter) + "（同時起動確認用）",
+                navigate = {
+                    onIntent(SampleTemplateIntent.TapListItem)
+                },
+            )
         }
     }
 }

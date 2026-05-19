@@ -38,6 +38,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.scene.SinglePaneSceneStrategy
 import androidx.navigation3.ui.NavDisplay
 import com.ogata_k.mobile.code_lab.R
+import com.ogata_k.mobile.code_lab.common.logI
 import com.ogata_k.mobile.code_lab.domain.enum.TemplateDiv
 import com.ogata_k.mobile.code_lab.feature.counter_sample.CounterSampleRoute
 import com.ogata_k.mobile.code_lab.feature.sample_template.SampleTemplateRoute
@@ -200,6 +201,7 @@ fun SetupRouting() {
                     },
                     navigateToCounter = {
                         backStack.add(RouteNavKey.CounterSample)
+                        logI("NAVIGATOR") { backStack.joinToString("->") { it.toString() } }
                     }
                 )
             }

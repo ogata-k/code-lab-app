@@ -15,7 +15,8 @@ import com.ogata_k.mobile.code_lab.core.mvi.middleware.intent.LoggingIntentMiddl
 object MviMiddlewareDefaults {
     fun <US : UiState, I : Intent<A>, A : Action> defaultIntentMiddlewares(): List<IntentMiddleware<US, I, A>> {
         return listOf(
-            LoggingIntentMiddleware()
+            LoggingIntentMiddleware(),
+            ThrottleIntentMiddleware()
         )
     }
 

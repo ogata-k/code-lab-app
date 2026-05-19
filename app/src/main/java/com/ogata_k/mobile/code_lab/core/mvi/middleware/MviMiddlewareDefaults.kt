@@ -8,6 +8,7 @@ import com.ogata_k.mobile.code_lab.core.mvi.UiState
 import com.ogata_k.mobile.code_lab.core.mvi.middleware.action.LoggingActionMiddleware
 import com.ogata_k.mobile.code_lab.core.mvi.middleware.action.PerformanceActionMiddleware
 import com.ogata_k.mobile.code_lab.core.mvi.middleware.intent.LoggingIntentMiddleware
+import com.ogata_k.mobile.code_lab.core.mvi.middleware.intent.ThrottleIntentMiddleware
 
 /**
  * デフォルトで適用するミドルウェアのリストを管理するオブジェクト

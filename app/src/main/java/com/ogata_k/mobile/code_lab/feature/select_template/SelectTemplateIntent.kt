@@ -10,7 +10,7 @@ import com.ogata_k.mobile.code_lab.domain.enum.TemplateDiv
  */
 sealed interface SelectTemplateIntent : Intent<SelectTemplateAction> {
     data class TapListItem(val templateDiv: TemplateDiv) : SelectTemplateIntent, ThrottleIntent {
-        override val kind: ThrottleKind
+        override val throttleKind: ThrottleKind
             get() = ThrottleKind.Navigation
     }
 

@@ -3,6 +3,7 @@
 
     <!-- 画面タイトル -->
     <string name="counter_screen_title">カウンター</string>
+    <string name="fifteen_puzzle_screen_title">１５パズル</string>
 
     <!-- セクションタイトル -->
     <string name="slide_duration_section_title">スライド速度</string>
@@ -36,4 +37,5 @@
 
     <!-- その他 -->
     <string name="counter">カウンター</string>
+    <string name="fifteen_puzzle">１５パズル</string>
 </resources>

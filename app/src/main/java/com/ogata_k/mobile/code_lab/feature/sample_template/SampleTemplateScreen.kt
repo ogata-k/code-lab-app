@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.ogata_k.mobile.code_lab.R
 import com.ogata_k.mobile.code_lab.domain.enum.TemplateDiv
+import com.ogata_k.mobile.code_lab.ui.enum.SampleFeatureDiv
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingS
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXS
 import com.ogata_k.mobile.code_lab.ui.widget.list.item.BasicNavigationCardItem
@@ -43,14 +44,20 @@ fun SampleTemplateScreen(
             BasicNavigationCardItem(
                 itemName = stringResource(R.string.counter),
                 navigate = {
-                    onIntent(SampleTemplateIntent.TapListItem)
+                    onIntent(SampleTemplateIntent.TapListItem(SampleFeatureDiv.CounterSample))
                 },
             )
             // TODO: remove
             BasicNavigationCardItem(
                 itemName = stringResource(R.string.counter) + "（同時起動確認用）",
                 navigate = {
-                    onIntent(SampleTemplateIntent.TapListItem)
+                    onIntent(SampleTemplateIntent.TapListItem(SampleFeatureDiv.CounterSample))
+                },
+            )
+            BasicNavigationCardItem(
+                itemName = stringResource(R.string.fifteen_puzzle),
+                navigate = {
+                    onIntent(SampleTemplateIntent.TapListItem(SampleFeatureDiv.FifteenPuzzleSample))
                 },
             )
         }

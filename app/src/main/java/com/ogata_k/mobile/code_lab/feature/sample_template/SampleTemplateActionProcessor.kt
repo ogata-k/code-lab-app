@@ -14,8 +14,8 @@ class SampleTemplateActionProcessor @Inject constructor() :
         scope: StoreScope<SampleTemplateUiState, SampleTemplateUiEffect, SampleTemplateIntent, SampleTemplateAction, SampleTemplateMutation>
     ) {
         when (action) {
-            is SampleTemplateAction.NavigateToCounter -> {
-                scope.emitUiEffect(SampleTemplateUiEffect.NavigateToCounter)
+            is SampleTemplateAction.NavigateToSampleFeature -> {
+                scope.emitUiEffect(SampleTemplateUiEffect.NavigateToSampleFeature(action.sampleFeatureDiv))
             }
         }
     }

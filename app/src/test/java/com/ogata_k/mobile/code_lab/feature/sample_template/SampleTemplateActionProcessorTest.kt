@@ -17,10 +17,10 @@ class SampleTemplateActionProcessorTest {
     @Test
     fun `NavigateToCounterアクションによってNavigateToCounterエフェクトが発行されること`() =
         runTest {
-            val action = SampleTemplateAction.NavigateToCounter
+            val action = SampleTemplateAction.NavigateToSampleFeature
 
             actionProcessor.process(action, scope)
 
-            coVerify { scope.emitUiEffect(SampleTemplateUiEffect.NavigateToCounter) }
+            coVerify { scope.emitUiEffect(SampleTemplateUiEffect.NavigateToSampleFeature) }
         }
 }

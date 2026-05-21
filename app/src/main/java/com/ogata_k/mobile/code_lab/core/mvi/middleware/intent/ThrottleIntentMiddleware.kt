@@ -81,7 +81,7 @@ class ThrottleIntentMiddleware<
             return
         }
 
-        val shouldPass = when (throttleIntent.kind) {
+        val shouldPass = when (throttleIntent.throttleKind) {
             // グローバルとは言っているが、その実は同じインスタンスの共有保持
             ThrottleKind.Navigation -> globalNavigationThrottleState.shouldPass(
                 // ListDetailの２Pane表示の際にListとDetailそれぞれでNavigationIntentを発行したときを考え、
@@ -109,7 +109,7 @@ class ThrottleIntentMiddleware<
         }
 
         logI("IntentMiddleware") {
-            "Skipped by Throttle(${throttleIntent.kind}) Intent: ${
+            "Skipped by Throttle(${throttleIntent.throttleKind}) Intent: ${
                 ObjectFormatter.formatAsSimple(
                     intent
                 )

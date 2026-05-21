@@ -41,8 +41,10 @@ import com.ogata_k.mobile.code_lab.R
 import com.ogata_k.mobile.code_lab.common.logI
 import com.ogata_k.mobile.code_lab.domain.enum.TemplateDiv
 import com.ogata_k.mobile.code_lab.feature.counter_sample.CounterSampleRoute
+import com.ogata_k.mobile.code_lab.feature.fifteen_puzzle_sample.FifteenPuzzleSampleRoute
 import com.ogata_k.mobile.code_lab.feature.sample_template.SampleTemplateRoute
 import com.ogata_k.mobile.code_lab.feature.select_template.SelectTemplateRoute
+import com.ogata_k.mobile.code_lab.ui.enum.SampleFeatureDiv
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingS
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXXS
 import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicScaffold
@@ -68,6 +70,12 @@ sealed interface RouteNavKey : NavKey {
      */
     @Serializable
     data object CounterSample : RouteNavKey
+
+    /**
+     * 15パズルサンプルのルーティング
+     */
+    @Serializable
+    data object FifteenPuzzleSample : RouteNavKey
 
     fun isSelectTemplateDetail(): Boolean {
         return this is SelectTemplateDetail
@@ -202,14 +210,26 @@ fun SetupRouting() {
                     onBack = {
                         popLatest(backStack)
                     },
-                    navigateToCounter = {
-                        navigate(backStack, RouteNavKey.CounterSample)
+                    navigateToSample = {
+                        val navKey = when (it) {
+                            SampleFeatureDiv.CounterSample -> RouteNavKey.CounterSample
+                            SampleFeatureDiv.FifteenPuzzleSample -> RouteNavKey.FifteenPuzzleSample
+                        }
+                        navigate(backStack, navKey)
                     }
                 )
             }
 
             entry<RouteNavKey.CounterSample> { _ ->
                 CounterSampleRoute(
+                    onBack = {
+                        popLatest(backStack)
+                    }
+                )
+            }
+
+            entry<RouteNavKey.FifteenPuzzleSample> { _ ->
+                FifteenPuzzleSampleRoute(
                     onBack = {
                         popLatest(backStack)
                     }

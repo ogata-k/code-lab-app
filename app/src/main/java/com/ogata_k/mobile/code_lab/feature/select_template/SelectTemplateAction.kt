@@ -1,6 +1,7 @@
 package com.ogata_k.mobile.code_lab.feature.select_template
 
 import com.ogata_k.mobile.code_lab.core.mvi.Action
+import com.ogata_k.mobile.code_lab.core.mvi.DefaultExecutionKey
 import com.ogata_k.mobile.code_lab.core.mvi.ExecutionStrategy
 import com.ogata_k.mobile.code_lab.domain.enum.TemplateDiv
 
@@ -13,6 +14,6 @@ sealed interface SelectTemplateAction : Action {
     }
 
     data class NavigateToTemplate(val templateDiv: TemplateDiv) : SelectTemplateAction {
-        override val strategy: ExecutionStrategy = ExecutionStrategy.Parallel
+        override val strategy: ExecutionStrategy = ExecutionStrategy.Sequential(DefaultExecutionKey)
     }
 }

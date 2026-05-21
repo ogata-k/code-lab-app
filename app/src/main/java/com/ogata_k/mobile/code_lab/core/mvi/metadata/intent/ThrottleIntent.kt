@@ -22,11 +22,11 @@ enum class ThrottleKind(
  */
 interface ThrottleIntent {
 
-    val kind: ThrottleKind
+    val throttleKind: ThrottleKind
 
     val throttleMs: Long?
         get() = null
 
     val resolvedThrottleMs: Long
-        get() = throttleMs ?: kind.defaultThrottleMs
+        get() = throttleMs ?: throttleKind.defaultThrottleMs
 }

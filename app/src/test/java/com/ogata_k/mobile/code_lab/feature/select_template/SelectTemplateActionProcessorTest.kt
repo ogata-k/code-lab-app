@@ -25,12 +25,12 @@ class SelectTemplateActionProcessorTest {
 
         actionProcessor.process(action, scope)
 
-        // ダイアログの表示、状態更新、スナックバーの表示、ダイアログの置換を確認
+        // ダイアログの表示、状態更新、スナックバーの表示、ダイアログの削除を確認
         coVerify {
             scope.emitCommonMutation(match { it is CommonMutation.AddDialog && it.data is CommonDialogData.ShowLoading })
             scope.emitMutation(SelectTemplateMutation.ToInitialized)
             scope.emitCommonUiEffect(match { it is CommonUiEffect.ShowSnackbar })
-            scope.emitCommonMutation(match { it is CommonMutation.ReplaceDialog && it.data is CommonDialogData.ShowConfirmDialog })
+            scope.emitCommonMutation(CommonMutation.DismissCurrentDialog)
         }
     }
 
@@ -44,4 +44,14 @@ class SelectTemplateActionProcessorTest {
 
             coVerify { scope.emitUiEffect(SelectTemplateUiEffect.NavigateToTemplate(templateDiv)) }
         }
+
+    @Test
+    fun `DismissDialogアクションによってダイアログが削除されること`() = runTest {
+        val dialog = mockk<CommonDialogData>()
+        val action = SelectTemplateAction.DismissDialog(dialog)
+
+        actionProcessor.process(action, scope)
+
+        coVerify { scope.removeDialog(dialog) }
+    }
 }

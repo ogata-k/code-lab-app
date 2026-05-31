@@ -63,10 +63,10 @@ class SelectTemplateStoreTest {
             assertEquals(SelectTemplateUiState.Initialized, stateInitialized.featureUiState)
             assert(stateInitialized.localDialogQueue.first() is CommonDialogData.ShowLoading)
 
-            // 4. ReplaceDialog によって localDialogQueue が更新される
+            // 4. DismissCurrentDialog によって localDialogQueue が更新される
             val finalState = awaitItem()
             assertEquals(SelectTemplateUiState.Initialized, finalState.featureUiState)
-            assert(finalState.localDialogQueue.first() is CommonDialogData.ShowConfirmDialog)
+            assert(finalState.localDialogQueue.isEmpty())
         }
     }
 

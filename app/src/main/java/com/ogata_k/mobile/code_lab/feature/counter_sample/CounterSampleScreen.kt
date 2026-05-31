@@ -44,8 +44,8 @@ import com.ogata_k.mobile.code_lab.ui.theme.SpacingS
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXS
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXXXXL
 import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicScaffold
-import com.ogata_k.mobile.code_lab.ui.widget.text.HeadlineSmallText
 import com.ogata_k.mobile.code_lab.ui.widget.text.LabelMediumText
+import com.ogata_k.mobile.code_lab.ui.widget.text.TitleSmallText
 
 /**
  * CounterSample featureのメイン画面を表示するComposable関数
@@ -57,7 +57,7 @@ fun CounterSampleScreen(
     onBack: (() -> Unit)?,
 ) {
     BasicScaffold(
-        title = stringResource(R.string.counter_screen_title),
+        title = stringResource(R.string.screen_title_counter),
         onBack = onBack,
     ) {
         // 下記アニメーションサンプルを利用したサンプル
@@ -144,9 +144,9 @@ fun CounterSampleScreen(
                 verticalArrangement = Arrangement.spacedBy(SpacingS),
             ) {
                 Column {
-                    HeadlineSmallText(
+                    TitleSmallText(
                         "%s : %d(ms)".format(
-                            stringResource(R.string.slide_duration_section_title),
+                            stringResource(R.string.section_title_slide_duration),
                             slideAnimationDurationMs.second.value.toInt()
                         )
                     )
@@ -168,9 +168,9 @@ fun CounterSampleScreen(
                 }
 
                 Column {
-                    HeadlineSmallText(
+                    TitleSmallText(
                         "%s : %d(ms)".format(
-                            stringResource(R.string.fade_duration_section_title),
+                            stringResource(R.string.section_title_fade_duration),
                             fadeAnimationDurationMs.second.value.toInt()
                         )
                     )
@@ -192,7 +192,7 @@ fun CounterSampleScreen(
                 }
 
                 Column {
-                    HeadlineSmallText(stringResource(R.string.slide_offset_divisor_section_title))
+                    TitleSmallText(stringResource(R.string.section_title_slide_offset_divisor))
 
                     val options = listOf(
                         SlideOffsetDivisorType.Full to stringResource(R.string.slide_offset_divisor_full),

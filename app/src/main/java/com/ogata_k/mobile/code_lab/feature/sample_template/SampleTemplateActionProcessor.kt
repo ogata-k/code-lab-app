@@ -14,6 +14,10 @@ class SampleTemplateActionProcessor @Inject constructor() :
         scope: StoreScope<SampleTemplateUiState, SampleTemplateUiEffect, SampleTemplateIntent, SampleTemplateAction, SampleTemplateMutation>
     ) {
         when (action) {
+            is SampleTemplateAction.DismissDialog -> {
+                scope.removeDialog(action.data)
+            }
+
             is SampleTemplateAction.NavigateToSampleFeature -> {
                 scope.emitUiEffect(SampleTemplateUiEffect.NavigateToSampleFeature(action.sampleFeatureDiv))
             }

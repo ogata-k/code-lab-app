@@ -11,9 +11,29 @@ class FifteenPuzzleSampleReducer :
         currentState: FifteenPuzzleSampleUiState,
         mutation: FifteenPuzzleSampleMutation
     ): FifteenPuzzleSampleUiState {
-        // TODO: 実際の変換処理
         return when (mutation) {
-            FifteenPuzzleSampleMutation.ToInitialized -> FifteenPuzzleSampleUiState.Initialized
+            is FifteenPuzzleSampleMutation.UpdateGridSizeSetting -> if (currentState is FifteenPuzzleSampleUiState.NotStart) {
+                currentState.copy(gridSize = mutation.gridSize)
+            } else {
+                currentState
+            }
+
+            is FifteenPuzzleSampleMutation.UpdateDifficultySetting -> if (currentState is FifteenPuzzleSampleUiState.NotStart) {
+                currentState.copy(difficulty = mutation.difficulty)
+            } else {
+                currentState
+            }
+
+            is FifteenPuzzleSampleMutation.SetBoardAndStartPlay -> {
+                val board = mutation.board
+                val estimateBoardDifficulty = mutation.estimateBoardDifficulty
+                // @todo スコア履歴とかを持っている場合は、ここでちゃんと渡すように指定を修正する必要がある。
+                FifteenPuzzleSampleUiState.Playing(
+                    board = board,
+                    estimateBoardDifficulty = estimateBoardDifficulty,
+                    stepCount = 0u
+                )
+            }
         }
     }
 }

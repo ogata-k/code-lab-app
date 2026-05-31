@@ -21,6 +21,10 @@ class CounterSampleActionProcessor @Inject constructor() :
         scope: StoreScope<CounterSampleUiState, CounterSampleUiEffect, CounterSampleIntent, CounterSampleAction, CounterSampleMutation>
     ) {
         when (action) {
+            is CounterSampleAction.DismissDialog -> {
+                scope.removeDialog(action.data)
+            }
+
             is CounterSampleAction.DecrementCount -> {
                 scope.emitMutation(AddCount(-action.amount.toInt()))
             }

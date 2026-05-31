@@ -3,6 +3,7 @@ package com.ogata_k.mobile.code_lab.feature.counter_sample
 import com.ogata_k.mobile.code_lab.core.mvi.CommonUiEffect
 import com.ogata_k.mobile.code_lab.core.mvi.StoreScope
 import com.ogata_k.mobile.code_lab.feature.counter_sample.enum.SlideOffsetDivisorType
+import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
 import com.ogata_k.mobile.code_lab.ui.widget.snackbar.CommonSnackbarData
 import com.ogata_k.mobile.code_lab.ui.widget.snackbar.CommonSnackbarMessage
 import io.mockk.coVerify
@@ -17,6 +18,16 @@ class CounterSampleActionProcessorTest {
     private val actionProcessor = CounterSampleActionProcessor()
     private val scope: StoreScope<CounterSampleUiState, CounterSampleUiEffect, CounterSampleIntent, CounterSampleAction, CounterSampleMutation> =
         mockk(relaxed = true)
+
+    @Test
+    fun `DismissDialogアクションによってダイアログが削除されること`() = runTest {
+        val dialog = mockk<CommonDialogData>()
+        val action = CounterSampleAction.DismissDialog(dialog)
+
+        actionProcessor.process(action, scope)
+
+        coVerify { scope.removeDialog(dialog) }
+    }
 
     @Test
     fun `IncrementアクションによってAddCountミューテーションが発行されること`() = runTest {

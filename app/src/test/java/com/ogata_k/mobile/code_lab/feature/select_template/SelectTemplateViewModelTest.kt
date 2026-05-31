@@ -45,7 +45,7 @@ class SelectTemplateViewModelTest {
                 awaitItem()
             )
 
-            // 2. AddDialog(Loading) happens immediately
+            // 2. PushDialog(Loading) happens immediately
             val loadingState = awaitItem()
             assertEquals(SelectTemplateUiState.UnInitialized, loadingState.featureUiState)
             assert(loadingState.localDialogQueue.isNotEmpty())
@@ -57,10 +57,10 @@ class SelectTemplateViewModelTest {
             val initializedState = awaitItem()
             assertEquals(SelectTemplateUiState.Initialized, initializedState.featureUiState)
 
-            // 4. ReplaceDialog によって localDialogQueue が更新される
+            // 4. DismissCurrentDialog によって localDialogQueue が更新される
             val finalState = awaitItem()
             assertEquals(SelectTemplateUiState.Initialized, finalState.featureUiState)
-            assert(finalState.localDialogQueue.isNotEmpty())
+            assert(finalState.localDialogQueue.isEmpty())
         }
     }
 
@@ -93,16 +93,11 @@ class SelectTemplateViewModelTest {
             )
 
             // 2. ローディング追加
-            awaitItem()
-
-            // 3. 初期化完了
-            advanceTimeBy(1001)
-            awaitItem() // Initialized への遷移
-            val stateWithDialog = awaitItem() // ダイアログ置き換え (ConfirmDialog)
+            val stateWithDialog = awaitItem()
             val dialog = stateWithDialog.localDialogQueue.first()
 
-            // 4. ダイアログ削除
-            viewModel.removeLocalDialog(dialog)
+            // 3. ダイアログ削除
+            viewModel.dispatchIntent(SelectTemplateIntent.DismissDialog(dialog))
             val stateEmpty = awaitItem()
             assertEquals(0, stateEmpty.localDialogQueue.size)
         }

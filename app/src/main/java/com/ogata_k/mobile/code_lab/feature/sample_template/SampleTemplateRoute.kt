@@ -20,6 +20,7 @@ fun SampleTemplateRoute(
 
     AdaptiveRouteHost(
         storeContainer = viewModel,
+        buildDismissIntent = SampleTemplateIntent::DismissDialog,
         onHandleUiEffect = { effect, snackbarHostState, context, scope ->
             when (effect) {
                 is SampleTemplateUiEffect.NavigateToSampleFeature -> navigateToSample(effect.sampleFeatureDiv)

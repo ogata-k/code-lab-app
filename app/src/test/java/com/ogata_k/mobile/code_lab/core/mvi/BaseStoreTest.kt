@@ -4,7 +4,6 @@ import app.cash.turbine.test
 import com.ogata_k.mobile.code_lab.global.GlobalUiController
 import com.ogata_k.mobile.code_lab.global.GlobalUiEffect
 import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
-import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogMessage
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -85,7 +84,9 @@ class BaseStoreTest {
         },
         additionalIntentMiddlewares = additionalIntentMiddlewares,
         additionalActionMiddlewares = additionalActionMiddlewares,
-    )
+    ) {
+        val testStoreScope: TestScope get() = storeScope
+    }
 
     @Test
     fun `dispatchIntentによって最終的にuiStateが更新されること`() = runTest {
@@ -354,7 +355,7 @@ class BaseStoreTest {
     fun `emitCommonMutationによってlocalDialogQueueが更新されること`() = runTest {
         val actionProcessor =
             mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
-        val dialogData = CommonDialogData.ShowConfirmDialog(CommonDialogMessage.Initialized) {}
+        val dialogData = CommonDialogData.ShowConfirmDialog(mockk())
 
         coEvery { actionProcessor.process(any(), any()) } coAnswers {
             secondArg<TestScope>().emitCommonMutation(CommonMutation.AddDialog(dialogData))
@@ -380,7 +381,7 @@ class BaseStoreTest {
     fun `removeDialogによってlocalDialogQueueからダイアログが削除されること`() = runTest {
         val actionProcessor =
             mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
-        val dialogData = CommonDialogData.ShowConfirmDialog(CommonDialogMessage.Initialized) {}
+        val dialogData = CommonDialogData.ShowConfirmDialog(mockk())
 
         // 最初にダイアログを追加するアクション
         coEvery { actionProcessor.process(any(), any()) } coAnswers {
@@ -405,7 +406,7 @@ class BaseStoreTest {
             assertEquals(dialogData, stateWithDialog.localDialogQueue.firstOrNull())
 
             // ダイアログ削除
-            store.removeDialog(dialogData)
+            store.testStoreScope.removeDialog(dialogData)
             val stateEmpty = awaitItem()
             assertEquals(0, stateEmpty.localDialogQueue.size)
         }
@@ -415,7 +416,7 @@ class BaseStoreTest {
     fun `ReplaceDialogでfromDataがnullかつキューが空の場合、先頭に追加されること`() = runTest {
         val actionProcessor =
             mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
-        val dialogData = CommonDialogData.ShowConfirmDialog(CommonDialogMessage.Initialized) {}
+        val dialogData = CommonDialogData.ShowConfirmDialog(mockk())
 
         coEvery { actionProcessor.process(any(), any()) } coAnswers {
             secondArg<TestScope>().emitCommonMutation(
@@ -446,8 +447,8 @@ class BaseStoreTest {
     fun `ReplaceDialogでfromDataがnullかつキューが空でない場合、先頭が置き換わること`() = runTest {
         val actionProcessor =
             mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
-        val initialDialog = CommonDialogData.ShowErrorDialog(CommonDialogMessage.Initialized, null)
-        val newDialog = CommonDialogData.ShowConfirmDialog(CommonDialogMessage.Initialized) {}
+        val initialDialog = CommonDialogData.ShowErrorDialog(mockk())
+        val newDialog = CommonDialogData.ShowConfirmDialog(mockk())
 
         coEvery { actionProcessor.process(any(), any()) } coAnswers {
             val action = it.invocation.args[0] as TestAction.Action1
@@ -481,8 +482,8 @@ class BaseStoreTest {
         runTest {
             val actionProcessor =
                 mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
-            val dialog1 = CommonDialogData.ShowErrorDialog(CommonDialogMessage.Initialized, null)
-            val dialog2 = CommonDialogData.ShowConfirmDialog(CommonDialogMessage.Initialized) {}
+            val dialog1 = CommonDialogData.ShowErrorDialog(mockk())
+            val dialog2 = CommonDialogData.ShowConfirmDialog(mockk())
             val replacement = CommonDialogData.ShowLoading()
 
             coEvery { actionProcessor.process(any(), any()) } coAnswers {
@@ -525,9 +526,9 @@ class BaseStoreTest {
     fun `ReplaceDialogでfromDataが指定されキューに存在しない場合、先頭に追加されること`() = runTest {
         val actionProcessor =
             mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
-        val initialDialog = CommonDialogData.ShowErrorDialog(CommonDialogMessage.Initialized, null)
+        val initialDialog = CommonDialogData.ShowErrorDialog(mockk())
         val nonExistentDialog = CommonDialogData.ShowLoading()
-        val newDialog = CommonDialogData.ShowConfirmDialog(CommonDialogMessage.Initialized) {}
+        val newDialog = CommonDialogData.ShowConfirmDialog(mockk())
 
         coEvery { actionProcessor.process(any(), any()) } coAnswers {
             val action = it.invocation.args[0] as TestAction.Action1
@@ -566,10 +567,10 @@ class BaseStoreTest {
     fun `CommonDialogData_ShowLoadingが正しくキューに追加されること`() = runTest {
         val actionProcessor =
             mockk<ActionProcessor<TestUiState, TestUiEffect, TestIntent, TestAction, TestMutation>>()
-        val loading = CommonDialogData.ShowLoading(CommonDialogMessage.Initialized)
+        val loading = CommonDialogData.ShowLoading(mockk())
 
         coEvery { actionProcessor.process(any(), any()) } coAnswers {
-            secondArg<TestScope>().emitCommonMutation(CommonMutation.AddDialog(loading))
+            secondArg<TestScope>().emitCommonMutation(CommonMutation.PushDialog(loading))
         }
 
         val store = TestStore(

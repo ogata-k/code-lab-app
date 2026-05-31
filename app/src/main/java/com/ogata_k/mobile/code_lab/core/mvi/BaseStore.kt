@@ -7,6 +7,7 @@ import com.ogata_k.mobile.code_lab.common.logV
 import com.ogata_k.mobile.code_lab.core.mvi.middleware.MviMiddlewareDefaults
 import com.ogata_k.mobile.code_lab.global.GlobalUiController
 import com.ogata_k.mobile.code_lab.global.GlobalUiEffect
+import com.ogata_k.mobile.code_lab.ui.widget.UiCallback
 import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -91,7 +92,33 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
             this@BaseStore.emitCommonMutation(mutation)
         }
 
-        override fun dispatchIntent(intent: I) = this@BaseStore.dispatchIntent(intent)
+        override fun intentCallback(intent: I) =
+            UiCallback { this@BaseStore.dispatchIntent(intent) }
+
+        override fun dispatchAction(action: A) {
+            this@BaseStore.dispatchAction(action)
+        }
+
+        override fun removeDialog(dialog: CommonDialogData) {
+            scope.launch {
+                emitCommonMutation(CommonMutation.RemoveDialog(dialog))
+            }
+        }
+
+        override fun dismissCurrentDialog() {
+            scope.launch {
+                emitCommonMutation(CommonMutation.DismissCurrentDialog)
+            }
+        }
+
+        override fun replaceDialog(
+            dialog: CommonDialogData,
+            fromData: CommonDialogData?
+        ) {
+            scope.launch {
+                emitCommonMutation(CommonMutation.DismissCurrentDialog)
+            }
+        }
     }
 
     // --- Intent Pipeline ---
@@ -382,15 +409,26 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
      * 共通のMutationを適用する。
      */
     protected suspend fun emitCommonMutation(mutation: CommonMutation) {
-        logV("Store") { "emit CommonMutation: ${ObjectFormatter.formatAsSimple(mutation)}" }
         _uiState.update { currentScreenState ->
             val nextScreenState = when (mutation) {
+                is CommonMutation.PushDialog -> {
+                    currentScreenState.copy(localDialogQueue = listOf(mutation.data) + currentScreenState.localDialogQueue)
+                }
+
                 is CommonMutation.AddDialog -> {
                     currentScreenState.copy(localDialogQueue = currentScreenState.localDialogQueue + mutation.data)
                 }
 
                 is CommonMutation.RemoveDialog -> {
                     currentScreenState.copy(localDialogQueue = currentScreenState.localDialogQueue - mutation.data)
+                }
+
+                is CommonMutation.DismissCurrentDialog -> {
+                    currentScreenState.copy(
+                        localDialogQueue = currentScreenState.localDialogQueue.drop(
+                            1
+                        )
+                    )
                 }
 
                 is CommonMutation.ReplaceDialog -> {
@@ -423,25 +461,6 @@ abstract class BaseStore<US : UiState, UE : UiEffect, I : Intent<A>, A : Action,
                 }, to ScreenState: ${ObjectFormatter.formatAsSimple(nextScreenState)}"
             }
             nextScreenState
-        }
-    }
-
-    /**
-     * ダイアログをキューから削除する
-     */
-    fun removeDialog(dialog: CommonDialogData) {
-        scope.launch {
-            emitCommonMutation(CommonMutation.RemoveDialog(dialog))
-        }
-    }
-
-    /**
-     * 先頭のダイアログを引数のデータで置き換える。指定されたfromDataがあればそれを置き換える。
-     * 先頭がなかったり指定したfromDataが見つからなければ、先頭に追加とする。
-     */
-    fun replaceDialog(dialog: CommonDialogData, fromData: CommonDialogData? = null) {
-        scope.launch {
-            emitCommonMutation(CommonMutation.ReplaceDialog(dialog, fromData))
         }
     }
 

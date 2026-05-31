@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -33,25 +34,49 @@ class FifteenPuzzleSampleViewModelTest {
     }
 
     @Test
-    fun `初期化時にInitialized状態になること`() = runTest {
-        val actionProcessor = FifteenPuzzleSampleActionProcessor()
+    fun `初期化時にNotStart状態になること`() = runTest {
+        val actionProcessor = FifteenPuzzleSampleActionProcessor(mockk(relaxed = true))
         val viewModel = FifteenPuzzleSampleViewModel(actionProcessor, mockk())
 
         viewModel.uiState.test {
-            // 初期状態がUnInitializedであることを確認
             assertEquals(
-                ScreenState(featureUiState = FifteenPuzzleSampleUiState.UnInitialized),
+                ScreenState(
+                    featureUiState = FifteenPuzzleSampleUiState.NotStart(
+                        4u,
+                        com.ogata_k.mobile.code_lab.domain.enum.FifteenPuzzleDifficulty.Normal
+                    )
+                ),
                 awaitItem()
             )
+        }
+    }
 
-            // Initializeアクションが完了するまで待機
+    @Test
+    fun `確認ダイアログを表示し、Intent経由で閉じることができること`() = runTest {
+        val actionProcessor = FifteenPuzzleSampleActionProcessor(mockk(relaxed = true))
+        val viewModel = FifteenPuzzleSampleViewModel(actionProcessor, mockk())
+
+        viewModel.uiState.test {
+            // 1. 初期状態
+            skipItems(1)
+
+            // 2. 確認ダイアログの表示を要求
+            viewModel.dispatchIntent(FifteenPuzzleSampleIntent.ConfirmGameSettingBeforePlay)
             advanceUntilIdle()
 
-            // viewModel.init内でInitializeアクションが呼ばれる想定
-            assertEquals(
-                ScreenState(featureUiState = FifteenPuzzleSampleUiState.Initialized),
-                awaitItem()
+            val stateWithDialog = awaitItem()
+            assertTrue(
+                "ダイアログが表示されていること",
+                stateWithDialog.localDialogQueue.isNotEmpty()
             )
+            val dialog = stateWithDialog.localDialogQueue.first()
+
+            // 3. Intent経由でダイアログを閉じる
+            viewModel.dispatchIntent(FifteenPuzzleSampleIntent.DismissDialog(dialog))
+            advanceUntilIdle()
+
+            val stateEmpty = awaitItem()
+            assertTrue("ダイアログが削除されていること", stateEmpty.localDialogQueue.isEmpty())
         }
     }
 }

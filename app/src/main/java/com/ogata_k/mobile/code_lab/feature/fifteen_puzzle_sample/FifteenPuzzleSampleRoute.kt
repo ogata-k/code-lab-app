@@ -18,6 +18,7 @@ fun FifteenPuzzleSampleRoute(
 
     AdaptiveRouteHost(
         storeContainer = viewModel,
+        buildDismissIntent = FifteenPuzzleSampleIntent::DismissDialog,
         onHandleUiEffect = { effect, snackbarHostState, context, scope ->
             // TODO: Handle effect
         },

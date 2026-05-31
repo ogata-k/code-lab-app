@@ -19,9 +19,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.ogata_k.mobile.code_lab.core.mvi.CommonUiEffect
+import com.ogata_k.mobile.code_lab.core.mvi.Intent
 import com.ogata_k.mobile.code_lab.core.mvi.StoreContainer
 import com.ogata_k.mobile.code_lab.core.mvi.UiEffect
 import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialog
+import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -65,8 +67,9 @@ fun <T> AdaptiveUiHost(
  * Effectの収集、ダイアログのキュー管理、およびAdaptiveなレイアウトの器を提供する。
  */
 @Composable
-fun <UE : UiEffect> AdaptiveRouteHost(
-    storeContainer: StoreContainer<*, UE, *, *>,
+fun <I : Intent<*>, UE : UiEffect> AdaptiveRouteHost(
+    storeContainer: StoreContainer<*, UE, I, *>,
+    buildDismissIntent: (CommonDialogData) -> I,
     onHandleCommonUiEffect: suspend (CommonUiEffect, SnackbarHostState, Context, CoroutineScope) -> Unit = { effect, snackbarHostState, context, coroutineScope ->
         when (effect) {
             is CommonUiEffect.ShowSnackbar -> {
@@ -124,7 +127,7 @@ fun <UE : UiEffect> AdaptiveRouteHost(
     // AdaptiveUiHost（ダイアログキュー管理込み）でのラップ
     AdaptiveUiHost(
         dialogQueue = screenState.localDialogQueue,
-        onDismissDialog = { storeContainer.removeLocalDialog(it) },
+        onDismissDialog = { storeContainer.dispatchIntent(buildDismissIntent(it)) },
         snackbarHostState = snackbarHostState,
         dialogContent = { effect, onDismiss ->
             CommonDialog(

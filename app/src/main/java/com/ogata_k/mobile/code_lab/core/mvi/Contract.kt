@@ -2,6 +2,7 @@ package com.ogata_k.mobile.code_lab.core.mvi
 
 import com.ogata_k.mobile.code_lab.common.BuildConfig
 import com.ogata_k.mobile.code_lab.global.GlobalUiEffect
+import com.ogata_k.mobile.code_lab.ui.widget.UiCallback
 import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
 import com.ogata_k.mobile.code_lab.ui.widget.snackbar.CommonSnackbarData
 import kotlinx.coroutines.currentCoroutineContext
@@ -115,8 +116,25 @@ interface Mutation
  * 共通で利用するミューテーション
  */
 sealed interface CommonMutation : Mutation {
+    /**
+     * 新しいダイアログを先頭に追加する（現在のダイアログとして何か表示されていれば、そのダイアログはいったん非表示になる。）
+     */
+    data class PushDialog(val data: CommonDialogData) : CommonMutation
+
+    /**
+     * 新しいダイアログを末尾に追加する。
+     */
     data class AddDialog(val data: CommonDialogData) : CommonMutation
+
+    /**
+     * 指定したダイアログを除外する。
+     */
     data class RemoveDialog(val data: CommonDialogData) : CommonMutation
+
+    /**
+     * 現在表示中のダイアログを削除する
+     */
+    data object DismissCurrentDialog : CommonMutation
 
     /**
      * 先頭のダイアログを引数のデータで置き換える。指定されたfromDataがあればそれを置き換える。
@@ -257,7 +275,32 @@ interface StoreScope<US : UiState, UE : UiEffect, I : Intent<A>, A : Action, M :
 
     suspend fun emitCommonMutation(mutation: CommonMutation)
 
-    fun dispatchIntent(intent: I)
+    /**
+     * ダイアログなどにコールバック呼び出しとしてIntentを起動するときのコールバックを登録したいときに利用する。
+     */
+    fun intentCallback(intent: I): UiCallback
+
+    /**
+     * アクションで処理した内容をもとに別のアクションを呼び出したいときに利用する。
+     * 例えば直列で処理は行うが、その処理の結果は非同期で行って最終結果だけ反映させるみたいな使い方を想定。
+     */
+    fun dispatchAction(action: A)
+
+    /**
+     * ダイアログをキューから削除する
+     */
+    fun removeDialog(dialog: CommonDialogData)
+
+    /**
+     * 現在表示中のダイアログを削除する
+     */
+    fun dismissCurrentDialog()
+
+    /**
+     * 先頭のダイアログを引数のデータで置き換える。指定されたfromDataがあればそれを置き換える。
+     * 先頭がなかったり指定したfromDataが見つからなければ、先頭に追加とする。
+     */
+    fun replaceDialog(dialog: CommonDialogData, fromData: CommonDialogData? = null)
 }
 
 /**
@@ -295,15 +338,4 @@ interface StoreContainer<US : UiState, UE : UiEffect, I : Intent<A>, A : Action>
      * 利用者の明示的な操作のdispatcher
      */
     fun dispatchIntent(intent: I)
-
-    /**
-     * ダイアログを削除
-     */
-    fun removeLocalDialog(dialog: CommonDialogData)
-
-    /**
-     * 先頭のダイアログを引数のデータで置き換える。指定されたfromDataがあればそれを置き換える。
-     * 先頭がなかったり指定したfromDataが見つからなければ、先頭に追加とする。
-     */
-    fun replaceLocalDialog(dialog: CommonDialogData, fromData: CommonDialogData? = null)
 }

@@ -18,6 +18,7 @@ fun CounterSampleRoute(
 
     AdaptiveRouteHost(
         storeContainer = viewModel,
+        buildDismissIntent = CounterSampleIntent::DismissDialog,
         onHandleUiEffect = { effect, snackbarHostState, context, scope ->
             // None
         },

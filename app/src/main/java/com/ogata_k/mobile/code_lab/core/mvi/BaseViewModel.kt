@@ -1,7 +1,6 @@
 package com.ogata_k.mobile.code_lab.core.mvi
 
 import androidx.lifecycle.ViewModel
-import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -23,14 +22,6 @@ abstract class BaseViewModel<US : UiState, UE : UiEffect, I : Intent<A>, A : Act
     override val uiEffect: Flow<UE> get() = store.uiEffect
 
     override val commonUiEffect: Flow<CommonUiEffect> get() = store.commonUiEffect
-
-    override fun removeLocalDialog(dialog: CommonDialogData) {
-        store.removeDialog(dialog)
-    }
-
-    override fun replaceLocalDialog(dialog: CommonDialogData, fromData: CommonDialogData?) {
-        store.replaceDialog(dialog, fromData)
-    }
 
     /**
      * 利用者の明示的な操作のdispatcher

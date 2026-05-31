@@ -1,14 +1,11 @@
 package com.ogata_k.mobile.code_lab.feature.select_template
 
-import com.ogata_k.mobile.code_lab.common.logI
 import com.ogata_k.mobile.code_lab.core.mvi.ActionProcessor
+import com.ogata_k.mobile.code_lab.core.mvi.CommonMutation
 import com.ogata_k.mobile.code_lab.core.mvi.CommonMutation.AddDialog
-import com.ogata_k.mobile.code_lab.core.mvi.CommonMutation.ReplaceDialog
 import com.ogata_k.mobile.code_lab.core.mvi.CommonUiEffect.ShowSnackbar
 import com.ogata_k.mobile.code_lab.core.mvi.StoreScope
-import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData.ShowConfirmDialog
 import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData.ShowLoading
-import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogMessage
 import com.ogata_k.mobile.code_lab.ui.widget.snackbar.CommonSnackbarData
 import com.ogata_k.mobile.code_lab.ui.widget.snackbar.CommonSnackbarMessage
 import kotlinx.coroutines.delay
@@ -24,6 +21,10 @@ class SelectTemplateActionProcessor @Inject constructor() :
         scope: StoreScope<SelectTemplateUiState, SelectTemplateUiEffect, SelectTemplateIntent, SelectTemplateAction, SelectTemplateMutation>
     ) {
         when (action) {
+            is SelectTemplateAction.DismissDialog -> {
+                scope.removeDialog(action.data)
+            }
+
             is SelectTemplateAction.Initialize -> {
                 // ローディングを表示
                 val loading = ShowLoading()
@@ -39,18 +40,8 @@ class SelectTemplateActionProcessor @Inject constructor() :
                     )
                 )
 
-                // ローディングを完了ダイアログに置き換える
-                scope.emitCommonMutation(
-                    ReplaceDialog(
-                        data = ShowConfirmDialog(
-                            message = CommonDialogMessage.Initialized,
-                            onDismiss = {
-                                logI("CommonMutation") { "confirm dialog on dismiss" }
-                            }
-                        ),
-                        fromData = loading
-                    )
-                )
+                // ローディング取り除く
+                scope.emitCommonMutation(CommonMutation.DismissCurrentDialog)
             }
 
             is SelectTemplateAction.NavigateToTemplate -> {

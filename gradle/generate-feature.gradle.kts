@@ -57,11 +57,16 @@ tasks.register("generateFeature") {
                 
                 import com.ogata_k.mobile.code_lab.core.mvi.Action
                 import com.ogata_k.mobile.code_lab.core.mvi.ExecutionStrategy
+                import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
                 
                 /**
                  * ${featureName} featureの内部で処理されるアクション
                  */
                 sealed interface ${featureName}Action : Action {
+                    data class DismissDialog(val data: CommonDialogData) : ${featureName}Action {
+                        override val strategy: ExecutionStrategy = ExecutionStrategy.Parallel
+                    }
+
                     // TODO: 本来のActionに書き換える
                     data object Initialize : ${featureName}Action {
                         override val strategy: ExecutionStrategy = ExecutionStrategy.Parallel
@@ -73,12 +78,16 @@ tasks.register("generateFeature") {
                 package $packageName
                 
                 import com.ogata_k.mobile.code_lab.core.mvi.Intent
+                import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
                 
                 /**
                  * ${featureName} featureに対するユーザーの意図（操作）
                  */
                 sealed interface ${featureName}Intent : Intent<${featureName}Action> {
+                    data class DismissDialog(val data: CommonDialogData) : ${featureName}Intent
+
                     override fun toAction(): ${featureName}Action? = when (this) {
+                        is DismissDialog -> ${featureName}Action.DismissDialog(data)
                         // TODO: Intentが増えたらここに追加
                         else -> null
                     }
@@ -115,6 +124,10 @@ tasks.register("generateFeature") {
                         scope: StoreScope<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation>
                     ) {
                         when (action) {
+                            is ${featureName}Action.DismissDialog -> {
+                                scope.removeDialog(action.data)
+                            }
+
                             is ${featureName}Action.Initialize -> {
                                 // TODO: 実際の初期化処理
                                 scope.emitMutation(${featureName}Mutation.ToInitialized)
@@ -223,6 +236,7 @@ tasks.register("generateFeature") {
                     
                     AdaptiveRouteHost(
                         storeContainer = viewModel,
+                        buildDismissIntent = ${featureName}Intent::DismissDialog,
                         onHandleUiEffect = { effect, snackbarHostState, context, scope ->
                             // TODO: Handle effect
                         },
@@ -311,6 +325,7 @@ tasks.register("generateFeature") {
                 package $packageName
                 
                 import com.ogata_k.mobile.code_lab.core.mvi.StoreScope
+                import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
                 import io.mockk.coVerify
                 import io.mockk.mockk
                 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -326,6 +341,16 @@ tasks.register("generateFeature") {
                     private val scope: StoreScope<${featureName}UiState, ${featureName}UiEffect, ${featureName}Intent, ${featureName}Action, ${featureName}Mutation> =
                         mockk(relaxed = true)
                 
+                    @Test
+                    fun `DismissDialogアクションによってダイアログが削除されること`() = runTest {
+                        val dialog = mockk<CommonDialogData>()
+                        val action = ${featureName}Action.DismissDialog(dialog)
+                
+                        actionProcessor.process(action, scope)
+                
+                        coVerify { scope.removeDialog(dialog) }
+                    }
+
                     @Test
                     fun `InitializeアクションによってToInitializedミューテーションが発行されること`() = runTest {
                         val action = ${featureName}Action.Initialize

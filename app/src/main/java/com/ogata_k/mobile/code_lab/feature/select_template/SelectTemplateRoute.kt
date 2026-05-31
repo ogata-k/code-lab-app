@@ -19,6 +19,7 @@ fun SelectTemplateRoute(
 
     AdaptiveRouteHost(
         storeContainer = viewModel,
+        buildDismissIntent = SelectTemplateIntent::DismissDialog,
         onHandleUiEffect = { effect, snackbarHostState, context, scope ->
             when (effect) {
                 is SelectTemplateUiEffect.NavigateToTemplate -> {

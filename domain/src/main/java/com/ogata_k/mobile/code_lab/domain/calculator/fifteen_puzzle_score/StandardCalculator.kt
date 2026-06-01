@@ -1,9 +1,15 @@
 package com.ogata_k.mobile.code_lab.domain.calculator.fifteen_puzzle_score
 
 import com.ogata_k.mobile.code_lab.domain.enum.FifteenPuzzleDifficulty
+import kotlin.math.pow
 import kotlin.math.roundToInt
 
 class StandardCalculator : ScoreCalculator {
+    companion object {
+        private const val ADJUST_SCALER = 5.0
+        private const val SIZE_EXPONENT = 3.75
+    }
+
     override fun calculate(
         gridSize: UInt,
         difficulty: FifteenPuzzleDifficulty,
@@ -11,16 +17,22 @@ class StandardCalculator : ScoreCalculator {
         stepCount: UInt
     ): UInt {
         if (stepCount == 0u) return 0u
-        val adjustScaler = 2.5
+        val e = estimateDifficultyValue.toDouble()
         val n = gridSize.toDouble()
-        val sizeScaler: Double = when (gridSize.toInt()) {
-            in 0..3 -> 0.3
-            4 -> 1.0   // 4x4: 面積 16 (基準)
-            5 -> 2.5   // 5x5: 面積 25
-            6 -> 5.7   // 6x6: 面積 36
-            else -> (n * n * n / 64.0) * (1.0 + (n - 4) * 0.25)
-        }
-        return (adjustScaler * estimateDifficultyValue.toDouble() * (estimateDifficultyValue.toInt() + 40) * sizeScaler / stepCount.toInt()).roundToInt()
-            .coerceIn(0, Int.MAX_VALUE).toUInt()
+        val steps = stepCount.toDouble()
+
+        val difficultyScore = e * (e + 40.0)
+
+        val sizeScaler = (n / 4.0).pow(SIZE_EXPONENT)
+
+        val score = ADJUST_SCALER *
+                difficultyScore *
+                sizeScaler /
+                steps
+
+        return score
+            .roundToInt()
+            .coerceAtLeast(0)
+            .toUInt()
     }
 }

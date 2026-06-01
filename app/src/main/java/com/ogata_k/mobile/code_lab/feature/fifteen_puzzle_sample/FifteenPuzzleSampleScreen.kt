@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +20,7 @@ import com.ogata_k.mobile.code_lab.ui.theme.SpacingS
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXXS
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXXXS
 import com.ogata_k.mobile.code_lab.ui.widget.button.PullDown
+import com.ogata_k.mobile.code_lab.ui.widget.game.FifteenPuzzleGameBoard
 import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicScaffold
 import com.ogata_k.mobile.code_lab.ui.widget.text.BodyMediumText
 import com.ogata_k.mobile.code_lab.ui.widget.text.LabelMediumText
@@ -131,8 +131,31 @@ fun PlayingBody(
     playingUiState: FifteenPuzzleSampleUiState.Playing,
     onIntent: (FifteenPuzzleSampleIntent) -> Unit
 ) {
-    Text(playingUiState.toString())
-    // TODO 実際の画面。注意として右下が最大値で空白にすることがゴールであることがわかるようなUIにすること
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(SpacingS),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.Start
+        ) {
+            TitleMediumText(
+                stringResource(R.string.step_counter).format(playingUiState.stepCount),
+                modifier = Modifier.align(Alignment.End),
+            )
+
+            Spacer(Modifier.height(SpacingXXXS))
+
+            FifteenPuzzleGameBoard(playingUiState.board) {
+                // TODO: MoveTile(value) のようなIntentを実装して呼び出す
+                // onIntent(FifteenPuzzleSampleIntent.MoveTile(value))
+            }
+        }
+    }
 }
 
 @Composable

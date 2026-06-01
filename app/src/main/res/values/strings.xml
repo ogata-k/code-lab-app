@@ -50,4 +50,5 @@
     <string name="fifteen_puzzle">１５パズル</string>
     <string name="start_message_for_fifteen_puzzle">グリッドサイズと難易度を選んでゲームを始めよう！！</string>
     <string name="start_doc_for_fifteen_puzzle">難しい設定であればあるほどゲームクリア後の得点が高くなるぞ！！</string>
+    <string name="step_counter">Steps: %s</string>
 </resources>

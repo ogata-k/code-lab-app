@@ -195,4 +195,9 @@ data class FifteenPuzzleBoard private constructor(
      * 全てのタイルが正しい位置にあるか
      */
     fun isGoal(): Boolean = values.indices.all { index -> values[index] == (index + 1).toUInt() }
+
+    /**
+     * 空の値を表す値
+     */
+    val emptyValue: UInt get() = gridSize * gridSize
 }

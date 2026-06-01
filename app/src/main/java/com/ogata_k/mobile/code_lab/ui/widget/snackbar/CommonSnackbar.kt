@@ -10,7 +10,6 @@ sealed interface CommonSnackbarMessage {
             Initialized -> R.string.snackbar_initialized
             ValueOutOfRange -> R.string.snackbar_value_out_of_range
             InvalidState -> R.string.snackbar_invalid_state
-            DifficultyMismatch -> R.string.snackbar_difficulty_mismatch
         }
 
         return context.getString(resId)
@@ -21,20 +20,13 @@ sealed interface CommonSnackbarMessage {
     data object ValueOutOfRange : CommonSnackbarMessage
 
     data object InvalidState : CommonSnackbarMessage
-
-    data object DifficultyMismatch : CommonSnackbarMessage
 }
 
 sealed interface CommonSnackbarLabel {
     fun asString(context: Context): String {
-        val resId = when (this) {
-            Retry -> R.string.snackbar_label_retry
-        }
-
-        return context.getString(resId)
+        // TODO: 他に合わせて修正
+        return this.toString()
     }
-
-    data object Retry : CommonSnackbarLabel
 }
 
 /**

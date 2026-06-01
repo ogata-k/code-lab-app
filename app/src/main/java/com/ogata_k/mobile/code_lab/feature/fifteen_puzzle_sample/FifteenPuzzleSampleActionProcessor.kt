@@ -19,7 +19,6 @@ import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData.ShowRequest
 import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogMessage.ConfirmStartFifteenPuzzleGame
 import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogTitle
 import com.ogata_k.mobile.code_lab.ui.widget.snackbar.CommonSnackbarData
-import com.ogata_k.mobile.code_lab.ui.widget.snackbar.CommonSnackbarLabel
 import com.ogata_k.mobile.code_lab.ui.widget.snackbar.CommonSnackbarMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -122,15 +121,7 @@ class FifteenPuzzleSampleActionProcessor @Inject constructor(
                     val estimateDifficulty =
                         FifteenPuzzleDifficulty.fromDifficultyValue(state.estimateBoardDifficulty)
                     if (state.board.difficulty != estimateDifficulty) {
-                        scope.emitCommonUiEffect(
-                            ShowSnackbar(
-                                CommonSnackbarData(
-                                    message = CommonSnackbarMessage.DifficultyMismatch,
-                                    actionLabel = CommonSnackbarLabel.Retry,
-                                    onAction = scope.intentCallback(FifteenPuzzleSampleIntent.RetryPlayGameByInvalidDifficulty)
-                                )
-                            )
-                        )
+                        scope.emitUiEffect(FifteenPuzzleSampleUiEffect.ShowDifficultyMismatchError)
                     }
                 }
             }

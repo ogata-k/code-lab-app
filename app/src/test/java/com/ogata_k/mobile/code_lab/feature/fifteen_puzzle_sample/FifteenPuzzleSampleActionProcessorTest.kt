@@ -1,13 +1,11 @@
 package com.ogata_k.mobile.code_lab.feature.fifteen_puzzle_sample
 
 import com.ogata_k.mobile.code_lab.core.mvi.CommonMutation
-import com.ogata_k.mobile.code_lab.core.mvi.CommonUiEffect
 import com.ogata_k.mobile.code_lab.core.mvi.StoreScope
 import com.ogata_k.mobile.code_lab.domain.calculator.fifteen_puzzle_score.ScoreCalculator
 import com.ogata_k.mobile.code_lab.domain.`class`.FifteenPuzzleBoard
 import com.ogata_k.mobile.code_lab.domain.enum.FifteenPuzzleDifficulty
 import com.ogata_k.mobile.code_lab.ui.widget.dialog.CommonDialogData
-import com.ogata_k.mobile.code_lab.ui.widget.snackbar.CommonSnackbarMessage
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -129,9 +127,7 @@ class FifteenPuzzleSampleActionProcessorTest {
         actionProcessor.process(action, scope)
 
             coVerify {
-                scope.emitCommonUiEffect(match {
-                    it is CommonUiEffect.ShowSnackbar && it.data.message == CommonSnackbarMessage.DifficultyMismatch
-                })
+                scope.emitUiEffect(FifteenPuzzleSampleUiEffect.ShowDifficultyMismatchError)
             }
     }
 

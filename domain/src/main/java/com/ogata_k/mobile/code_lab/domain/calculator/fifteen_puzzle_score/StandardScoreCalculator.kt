@@ -6,8 +6,7 @@ import kotlin.math.roundToInt
 
 class StandardScoreCalculator : ScoreCalculator {
     companion object {
-        private const val ADJUST_SCALER = 5.0
-        private const val SIZE_EXPONENT = 3.75
+        private const val ADJUST_SCALER = 0.4
     }
 
     override fun calculate(
@@ -23,12 +22,14 @@ class StandardScoreCalculator : ScoreCalculator {
 
         val difficultyScore = e * (e + 40.0)
 
-        val sizeScaler = (n / 4.0).pow(SIZE_EXPONENT)
+        val sizeScaler = (n / 4.0).pow(3.5 + e / 250.0)
+
+        val adjustedSteps = steps / n
 
         val score = ADJUST_SCALER *
                 difficultyScore *
                 sizeScaler /
-                steps
+                (adjustedSteps + 1.0)
 
         return score
             .roundToInt()

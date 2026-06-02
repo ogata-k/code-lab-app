@@ -151,8 +151,7 @@ fun PlayingBody(
             Spacer(Modifier.height(SpacingXXXS))
 
             FifteenPuzzleGameBoard(playingUiState.board) {
-                // TODO: MoveTile(value) のようなIntentを実装して呼び出す
-                // onIntent(FifteenPuzzleSampleIntent.MoveTile(value))
+                onIntent(FifteenPuzzleSampleIntent.TapBoardCell(it))
             }
         }
     }

@@ -152,6 +152,28 @@ class FifteenPuzzleSampleActionProcessor @Inject constructor(
                 scope.emitCommonMutation(RemoveDialog(loading))
                 scope.dispatchAction(FifteenPuzzleSampleAction.CheckInitialBoardDifficulty)
             }
+
+            is FifteenPuzzleSampleAction.MoveCell -> {
+                val currentUiState = scope.getUiStateSnapshot()
+                if (currentUiState !is FifteenPuzzleSampleUiState.Playing) {
+                    scope.emitCommonUiEffect(
+                        ShowSnackbar(
+                            CommonSnackbarData(
+                                message = CommonSnackbarMessage.InvalidState
+                            )
+                        )
+                    )
+                    return
+                }
+
+                // 移動した後の盤面を求める。移動できなかった場合は、後続の処理の必要はないのでここでreturnする。
+                val nextBoard =
+                    currentUiState.board.move(action.cellValue) ?: return
+
+                scope.emitMutation(FifteenPuzzleSampleMutation.IncrementBoardState(nextBoard))
+
+                // TODO ゲームクリア判定の処理
+            }
         }
     }
 }

@@ -16,4 +16,6 @@ sealed interface FifteenPuzzleSampleMutation : Mutation {
         val board: FifteenPuzzleBoard,
         val estimateBoardDifficulty: UInt
     ) : FifteenPuzzleSampleMutation
+
+    data class IncrementBoardState(val board: FifteenPuzzleBoard) : FifteenPuzzleSampleMutation
 }

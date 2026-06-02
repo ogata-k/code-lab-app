@@ -45,4 +45,8 @@ sealed interface FifteenPuzzleSampleAction : Action {
             get() = ExecutionStrategy.Sequential(DefaultExecutionKey)
     }
 
+    data class MoveCell(val cellValue: UInt) : FifteenPuzzleSampleAction {
+        override val strategy: ExecutionStrategy
+            get() = ExecutionStrategy.Sequential(DefaultExecutionKey)
+    }
 }

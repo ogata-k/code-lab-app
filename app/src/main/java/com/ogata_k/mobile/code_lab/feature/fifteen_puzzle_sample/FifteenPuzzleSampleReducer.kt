@@ -1,6 +1,7 @@
 package com.ogata_k.mobile.code_lab.feature.fifteen_puzzle_sample
 
 import com.ogata_k.mobile.code_lab.core.mvi.Reducer
+import com.ogata_k.mobile.code_lab.feature.fifteen_puzzle_sample.FifteenPuzzleSampleUiState.Playing
 
 /**
  * FifteenPuzzleSample featureの現在の状態とミューテーションから新しい状態を生成するクラス
@@ -28,11 +29,17 @@ class FifteenPuzzleSampleReducer :
                 val board = mutation.board
                 val estimateBoardDifficulty = mutation.estimateBoardDifficulty
                 // @todo スコア履歴とかを持っている場合は、ここでちゃんと渡すように指定を修正する必要がある。
-                FifteenPuzzleSampleUiState.Playing(
+                Playing(
                     board = board,
                     estimateBoardDifficulty = estimateBoardDifficulty,
                     stepCount = 0u
                 )
+            }
+
+            is FifteenPuzzleSampleMutation.IncrementBoardState -> if (currentState is FifteenPuzzleSampleUiState.Playing) {
+                currentState.copy(board = mutation.board, stepCount = currentState.stepCount + 1u)
+            } else {
+                currentState
             }
         }
     }

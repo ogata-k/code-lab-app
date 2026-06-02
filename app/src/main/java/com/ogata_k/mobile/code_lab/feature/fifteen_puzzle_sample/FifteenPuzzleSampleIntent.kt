@@ -15,6 +15,7 @@ sealed interface FifteenPuzzleSampleIntent : Intent<FifteenPuzzleSampleAction> {
     data object ConfirmGameSettingBeforePlay : FifteenPuzzleSampleIntent
     data object StartPlayGame : FifteenPuzzleSampleIntent
     data object RetryPlayGameByInvalidDifficulty : FifteenPuzzleSampleIntent
+    data class TapBoardCell(val cellValue: UInt) : FifteenPuzzleSampleIntent
 
     override fun toAction(): FifteenPuzzleSampleAction? = when (this) {
         is DismissDialog -> FifteenPuzzleSampleAction.DismissDialog(this.data)
@@ -23,5 +24,6 @@ sealed interface FifteenPuzzleSampleIntent : Intent<FifteenPuzzleSampleAction> {
         ConfirmGameSettingBeforePlay -> FifteenPuzzleSampleAction.ConfirmGameSettingBeforePlay
         StartPlayGame -> FifteenPuzzleSampleAction.StartPlayGame
         RetryPlayGameByInvalidDifficulty -> FifteenPuzzleSampleAction.RetryPlayGameByInvalidDifficulty
+        is TapBoardCell -> FifteenPuzzleSampleAction.MoveCell(this.cellValue)
     }
 }

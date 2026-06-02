@@ -4,7 +4,7 @@ import com.ogata_k.mobile.code_lab.domain.enum.FifteenPuzzleDifficulty
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-class StandardCalculator : ScoreCalculator {
+class StandardScoreCalculator : ScoreCalculator {
     companion object {
         private const val ADJUST_SCALER = 5.0
         private const val SIZE_EXPONENT = 3.75

@@ -12,7 +12,7 @@ class FifteenPuzzleScoreEstimatorTest {
      */
     @Test
     fun estimateMaxScore_increasesWithDifficulty() {
-        val calculator = StandardCalculator()
+        val calculator = StandardScoreCalculator()
         val gridSizes = (3u..10u).toList()
         val difficulties = FifteenPuzzleDifficulty.entries
 
@@ -37,7 +37,7 @@ class FifteenPuzzleScoreEstimatorTest {
      */
     @Test
     fun estimateMaxScore_increasesWithGridSize() {
-        val calculator = StandardCalculator()
+        val calculator = StandardScoreCalculator()
         val gridSizes = (3u..10u).toList()
         val difficulties = FifteenPuzzleDifficulty.entries
 

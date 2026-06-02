@@ -165,6 +165,10 @@ class FifteenPuzzleSampleActionProcessor @Inject constructor(
                     )
                     return
                 }
+                if (currentUiState.board.isGoal()) {
+                    // 完成した盤面なので移動させない
+                    return
+                }
 
                 // 移動した後の盤面を求める。移動できなかった場合は、後続の処理の必要はないのでここでreturnする。
                 val nextBoard =

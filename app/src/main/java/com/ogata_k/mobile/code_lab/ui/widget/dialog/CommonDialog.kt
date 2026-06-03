@@ -80,6 +80,10 @@ sealed interface CommonDialogData {
         val onDismiss: UiCallback = UiCallback({
             logI("CommonMutation") { "error dialog on dismiss" }
         }),
+        val properties: DialogProperties = DialogProperties(
+            dismissOnClickOutside = false,
+            dismissOnBackPress = true,
+        ),
     ) : CommonDialogData
 
     data class ShowConfirmDialog(
@@ -87,6 +91,10 @@ sealed interface CommonDialogData {
         val onDismiss: UiCallback = UiCallback({
             logI("CommonMutation") { "confirm dialog on dismiss" }
         }),
+        val properties: DialogProperties = DialogProperties(
+            dismissOnClickOutside = false,
+            dismissOnBackPress = true,
+        ),
     ) : CommonDialogData
 
     data class ShowRequestActionDialog(
@@ -125,6 +133,7 @@ fun CommonDialog(
                     onDismiss()
                     effect.onDismiss.invoke()
                 },
+                properties = effect.properties,
             )
         }
 
@@ -137,6 +146,7 @@ fun CommonDialog(
                     onDismiss()
                     effect.onDismiss.invoke()
                 },
+                properties = effect.properties,
             )
         }
 
@@ -162,7 +172,8 @@ fun CommonDialog(
                     {
                         effect.onAction(effect)
                     }
-                )
+                ),
+                properties = effect.properties,
             )
         }
 

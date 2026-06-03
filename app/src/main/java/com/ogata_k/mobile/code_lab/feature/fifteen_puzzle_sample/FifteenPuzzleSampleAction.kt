@@ -49,4 +49,24 @@ sealed interface FifteenPuzzleSampleAction : Action {
         override val strategy: ExecutionStrategy
             get() = ExecutionStrategy.Sequential(DefaultExecutionKey)
     }
+
+    data object FinishGame : FifteenPuzzleSampleAction {
+        override val strategy: ExecutionStrategy
+            get() = ExecutionStrategy.Sequential(DefaultExecutionKey)
+    }
+
+    data object RequestNavigateToNextGame : FifteenPuzzleSampleAction {
+        override val strategy: ExecutionStrategy
+            get() = ExecutionStrategy.Sequential(DefaultExecutionKey)
+    }
+
+    data object NavigateToChangeSettingFormForRetry : FifteenPuzzleSampleAction {
+        override val strategy: ExecutionStrategy
+            get() = ExecutionStrategy.Sequential(DefaultExecutionKey)
+    }
+
+    data object RetryGameWithSameSetting : FifteenPuzzleSampleAction {
+        override val strategy: ExecutionStrategy
+            get() = ExecutionStrategy.Sequential(DefaultExecutionKey)
+    }
 }

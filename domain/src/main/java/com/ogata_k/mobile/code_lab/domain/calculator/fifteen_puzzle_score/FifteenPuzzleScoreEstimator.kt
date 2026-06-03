@@ -16,19 +16,31 @@ object FifteenPuzzleScoreEstimator {
         difficulty: FifteenPuzzleDifficulty
     ): UInt {
         val edv = difficulty.difficultyAverage
+        val idealStepCount = estimateIdealStepCount(gridSize, difficulty)
+
+        return calculator.calculate(
+            gridSize = gridSize,
+            difficulty = difficulty,
+            estimateDifficultyValue = edv,
+            stepCount = idealStepCount
+        )
+    }
+
+    /**
+     * 指定された条件での推定最大スコアを算出するときに利用する想定手数を求める
+     */
+    fun estimateIdealStepCount(
+        gridSize: UInt,
+        difficulty: FifteenPuzzleDifficulty
+    ): UInt {
+        val edv = difficulty.difficultyAverage
         val n = gridSize.toDouble()
 
         // 正規化係数を用いて、理想的な手数(rawValueの期待値)を逆算する
         val maxEstimatedValue = n * n * n * 0.7
         val idealStepCount = (edv.toDouble() / 100.0 * maxEstimatedValue)
             .roundToInt()
-            .coerceAtLeast(1)
 
-        return calculator.calculate(
-            gridSize = gridSize,
-            difficulty = difficulty,
-            estimateDifficultyValue = edv,
-            stepCount = idealStepCount.toUInt()
-        )
+        return idealStepCount.coerceAtLeast(1).toUInt()
     }
 }

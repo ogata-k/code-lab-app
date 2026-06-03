@@ -18,4 +18,19 @@ sealed interface FifteenPuzzleSampleMutation : Mutation {
     ) : FifteenPuzzleSampleMutation
 
     data class IncrementBoardState(val board: FifteenPuzzleBoard) : FifteenPuzzleSampleMutation
+
+    data class GameCleared(
+        val gridSize: UInt,
+        val difficulty: FifteenPuzzleDifficulty,
+        val estimateBoardDifficulty: UInt,
+        val estimateStepCount: UInt,
+        val stepCount: UInt,
+        val score: UInt,
+    ) : FifteenPuzzleSampleMutation
+
+    data class SetToSettingForm(
+        val gridSize: UInt,
+        val difficulty: FifteenPuzzleDifficulty,
+    ) : FifteenPuzzleSampleMutation
+
 }

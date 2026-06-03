@@ -30,6 +30,7 @@ import com.ogata_k.mobile.code_lab.ui.theme.BoarderThickness
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingM
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXS
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXXS
+import com.ogata_k.mobile.code_lab.ui.widget.text.ButtonMediumText
 import com.ogata_k.mobile.code_lab.ui.widget.text.LabelMediumText
 
 @Composable
@@ -37,8 +38,8 @@ fun <T> PullDown(
     modifier: Modifier = Modifier,
     items: Iterable<T>,
     current: T,
-    toMenuLabel: (T) -> String,
-    toButtonLabel: (T) -> String = toMenuLabel,
+    toMenuLabel: @Composable (T) -> String,
+    toButtonLabel: @Composable (T) -> String = toMenuLabel,
     /**
      * メニュー表示を閉じることができるならtrueを返す
      */
@@ -59,7 +60,7 @@ fun <T> PullDown(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(SpacingXS)
             ) {
-                LabelMediumText(toButtonLabel(current))
+                ButtonMediumText(toButtonLabel(current))
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = null

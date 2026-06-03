@@ -36,11 +36,25 @@ class FifteenPuzzleSampleReducer :
                 )
             }
 
-            is FifteenPuzzleSampleMutation.IncrementBoardState -> if (currentState is FifteenPuzzleSampleUiState.Playing) {
+            is FifteenPuzzleSampleMutation.IncrementBoardState -> if (currentState is Playing) {
                 currentState.copy(board = mutation.board, stepCount = currentState.stepCount + 1u)
             } else {
                 currentState
             }
+
+            is FifteenPuzzleSampleMutation.GameCleared -> FifteenPuzzleSampleUiState.GameCleared(
+                gridSize = mutation.gridSize,
+                difficulty = mutation.difficulty,
+                estimateBoardDifficulty = mutation.estimateBoardDifficulty,
+                estimateStepCount = mutation.estimateStepCount,
+                stepCount = mutation.stepCount,
+                score = mutation.score,
+            )
+
+            is FifteenPuzzleSampleMutation.SetToSettingForm -> FifteenPuzzleSampleUiState.NotStart(
+                gridSize = mutation.gridSize,
+                difficulty = mutation.difficulty,
+            )
         }
     }
 }

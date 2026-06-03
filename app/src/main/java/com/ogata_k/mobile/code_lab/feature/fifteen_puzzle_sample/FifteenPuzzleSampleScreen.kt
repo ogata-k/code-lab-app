@@ -1,5 +1,9 @@
 package com.ogata_k.mobile.code_lab.feature.fifteen_puzzle_sample
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -9,12 +13,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import com.ogata_k.mobile.code_lab.R
 import com.ogata_k.mobile.code_lab.domain.enum.FifteenPuzzleDifficulty
+import com.ogata_k.mobile.code_lab.ui.theme.SpacingL
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingM
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingS
 import com.ogata_k.mobile.code_lab.ui.theme.SpacingXXS
@@ -23,7 +33,10 @@ import com.ogata_k.mobile.code_lab.ui.widget.button.PullDown
 import com.ogata_k.mobile.code_lab.ui.widget.game.FifteenPuzzleGameBoard
 import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicScaffold
 import com.ogata_k.mobile.code_lab.ui.widget.text.BodyMediumText
-import com.ogata_k.mobile.code_lab.ui.widget.text.LabelMediumText
+import com.ogata_k.mobile.code_lab.ui.widget.text.ButtonMediumText
+import com.ogata_k.mobile.code_lab.ui.widget.text.DisplayMediumText
+import com.ogata_k.mobile.code_lab.ui.widget.text.HeadlineSmallText
+import com.ogata_k.mobile.code_lab.ui.widget.text.TitleLargeText
 import com.ogata_k.mobile.code_lab.ui.widget.text.TitleMediumText
 import com.ogata_k.mobile.code_lab.ui.widget.text.TitleSmallText
 
@@ -33,6 +46,7 @@ import com.ogata_k.mobile.code_lab.ui.widget.text.TitleSmallText
 @Composable
 fun FifteenPuzzleSampleScreen(
     uiState: FifteenPuzzleSampleUiState,
+    isPlayClearAnimation: Boolean,
     onIntent: (FifteenPuzzleSampleIntent) -> Unit,
     onBack: (() -> Unit)?,
 ) {
@@ -40,19 +54,22 @@ fun FifteenPuzzleSampleScreen(
         title = stringResource(R.string.screen_title_fifteen_puzzle),
         onBack = onBack,
     ) {
-        when (uiState) {
-            is FifteenPuzzleSampleUiState.NotStart -> {
-                NotStartBody(uiState, onIntent)
-            }
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (uiState) {
+                is FifteenPuzzleSampleUiState.NotStart -> {
+                    NotStartBody(uiState, onIntent)
+                }
 
-            is FifteenPuzzleSampleUiState.Playing -> {
-                PlayingBody(uiState, onIntent)
-            }
+                is FifteenPuzzleSampleUiState.Playing -> {
+                    PlayingBody(uiState, isPlayClearAnimation, onIntent)
+                }
 
-            is FifteenPuzzleSampleUiState.GameCleared -> {
-                GameClearedBody(uiState, onIntent)
+                is FifteenPuzzleSampleUiState.GameCleared -> {
+                    GameClearedBody(uiState, onIntent)
+                }
             }
         }
+        // @todo 紙吹雪の表示
     }
 }
 
@@ -80,7 +97,7 @@ fun NotStartBody(
         PullDown(
             items = listOf(3u, 4u, 5u, 6u),
             current = notStartUiState.gridSize,
-            toMenuLabel = { "%s × %s".format(it, it) },
+            toMenuLabel = { stringResource(R.string.grid_size).format(it, it) },
             selectMenu = {
                 onIntent(FifteenPuzzleSampleIntent.ChangeGridSize(it))
                 return@PullDown true
@@ -120,7 +137,7 @@ fun NotStartBody(
                     onIntent(FifteenPuzzleSampleIntent.ConfirmGameSettingBeforePlay)
                 },
             ) {
-                LabelMediumText(stringResource(R.string.btn_confirm_setting))
+                ButtonMediumText(stringResource(R.string.btn_confirm_setting))
             }
         }
     }
@@ -129,9 +146,18 @@ fun NotStartBody(
 @Composable
 fun PlayingBody(
     playingUiState: FifteenPuzzleSampleUiState.Playing,
+    isPlayClearAnimation: Boolean,
     onIntent: (FifteenPuzzleSampleIntent) -> Unit
 ) {
     val scrollState = rememberScrollState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPlayClearAnimation) 1.1f else 1.0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "BounceScale"
+    )
 
     Column(
         modifier = Modifier
@@ -141,17 +167,31 @@ fun PlayingBody(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Column(
-            horizontalAlignment = Alignment.Start
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier.graphicsLayer(
+                scaleX = scale,
+                scaleY = scale
+            )
         ) {
             TitleMediumText(
-                stringResource(R.string.step_counter).format(playingUiState.stepCount),
+                stringResource(R.string.step_counter_with_label).format(playingUiState.stepCount),
                 modifier = Modifier.align(Alignment.End),
             )
 
             Spacer(Modifier.height(SpacingXXXS))
 
-            FifteenPuzzleGameBoard(playingUiState.board) {
-                onIntent(FifteenPuzzleSampleIntent.TapBoardCell(it))
+            Box(contentAlignment = Alignment.Center) {
+                FifteenPuzzleGameBoard(playingUiState.board) {
+                    onIntent(FifteenPuzzleSampleIntent.TapBoardCell(it))
+                }
+
+                if (isPlayClearAnimation) {
+                    TitleLargeText(
+                        text = stringResource(R.string.congratulations),
+                        color = Color.Magenta,
+                        modifier = Modifier.graphicsLayer(scaleX = 1.5f, scaleY = 1.5f)
+                    )
+                }
             }
         }
     }
@@ -162,5 +202,64 @@ fun GameClearedBody(
     gameClearedUiState: FifteenPuzzleSampleUiState.GameCleared,
     onIntent: (FifteenPuzzleSampleIntent) -> Unit
 ) {
-    TODO("Not yet implemented")
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(SpacingS),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        HeadlineSmallText(
+            text = stringResource(R.string.congratulations),
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(Modifier.height(SpacingM))
+
+        ElevatedCard(
+            modifier = Modifier.padding(SpacingS)
+        ) {
+            Column(
+                modifier = Modifier.padding(SpacingM),
+                horizontalAlignment = Alignment.Start,
+            ) {
+                HeadlineSmallText(
+                    text = stringResource(R.string.fixed_score),
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                DisplayMediumText(
+                    text = gameClearedUiState.score.toString(),
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+
+                Spacer(Modifier.height(SpacingS))
+
+                BodyMediumText(
+                    text = stringResource(R.string.grid_size_with_label).format(
+                        gameClearedUiState.gridSize.toInt(),
+                        gameClearedUiState.gridSize.toInt()
+                    )
+                )
+                BodyMediumText(
+                    text = stringResource(R.string.step_counter_with_label).format(
+                        gameClearedUiState.stepCount.toInt()
+                    )
+                )
+            }
+        }
+
+        Spacer(Modifier.height(SpacingL))
+
+        Button(
+            onClick = {
+                onIntent(FifteenPuzzleSampleIntent.TapButtonToNextGame)
+            }
+        ) {
+            ButtonMediumText(stringResource(R.string.btn_navigate_to_next_game))
+        }
+    }
 }

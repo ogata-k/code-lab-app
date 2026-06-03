@@ -30,6 +30,7 @@ fun BasicDialog(
     text: String,
     dismissButtonText: String,
     onDismissRequest: () -> Unit,
+    onDismissButtonRequest: () -> Unit = onDismissRequest,
     action: Pair<String, (dismissDialog: () -> Unit) -> Unit>? = null,
     properties: DialogProperties = DialogProperties(
         dismissOnClickOutside = false,
@@ -51,7 +52,7 @@ fun BasicDialog(
         } else {
             {
                 TextButton(onClick = {
-                    onDismissRequest()
+                    onDismissButtonRequest()
                 }) {
                     ButtonMediumText(dismissButtonText)
                 }

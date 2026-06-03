@@ -19,11 +19,15 @@
     <string name="btn_cancel">キャンセル</string>
     <string name="btn_start">開始</string>
     <string name="btn_confirm_setting">設定確認</string>
+    <string name="btn_navigate_to_next_game">もう一度遊ぶ</string>
+    <string name="btn_retry">リトライ</string>
+    <string name="btn_change_setting">設定を変更</string>
 
     <!-- ダイアログ -->
     <string name="dialog_title_error">エラー</string>
     <string name="dialog_title_confirm">確認</string>
-    <string name="dialog_content_confirm_fifteen_difficulty_before_play">サイズ：%s\n難易度：%s\n\nこの設定でゲームを開始します。最高得点は%s点ぐらいになりますが、よろしいですか？</string>
+    <string name="dialog_content_confirm_fifteen_difficulty_before_play">グリッドサイズ：%s × %s\n難易度：%s\n\nこの設定でゲームを開始します。最高得点は%s点ぐらいになりますが、よろしいですか？</string>
+    <string name="dialog_content_request_navigate_to_next_game">今の設定でゲームをもう一度プレイしますか？\n\nグリッドサイズ：%s × %s\n難易度：%s\n最高得点（推定）：%s</string>
 
     <!-- スナックバー -->
     <string name="snackbar_initialized">Initialized</string>
@@ -50,5 +54,9 @@
     <string name="fifteen_puzzle">１５パズル</string>
     <string name="start_message_for_fifteen_puzzle">グリッドサイズと難易度を選んでゲームを始めよう！！</string>
     <string name="start_doc_for_fifteen_puzzle">難しい設定であればあるほどゲームクリア後の得点が高くなるぞ！！</string>
-    <string name="step_counter">Steps: %s</string>
+    <string name="grid_size">%s × %s</string>
+    <string name="grid_size_with_label">グリッドサイズ: %s × %s</string>
+    <string name="step_counter_with_label">手数: %s</string>
+    <string name="congratulations">CONGRATULATIONS!!</string>
+    <string name="fixed_score">最終スコア</string>
 </resources>

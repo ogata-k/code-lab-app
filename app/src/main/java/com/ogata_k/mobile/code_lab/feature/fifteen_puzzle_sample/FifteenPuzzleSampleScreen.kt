@@ -245,6 +245,21 @@ fun GameClearedBody(
                     )
                 )
                 BodyMediumText(
+                    text = stringResource(R.string.difficulty_with_label).format(
+                        gameClearedUiState.difficulty.toString()
+                    )
+                )
+                BodyMediumText(
+                    text = stringResource(R.string.estimate_difficulty_with_label).format(
+                        gameClearedUiState.estimateBoardDifficulty.toInt()
+                    )
+                )
+                BodyMediumText(
+                    text = stringResource(R.string.estimate_step_count_with_label).format(
+                        gameClearedUiState.estimateStepCount.toInt()
+                    )
+                )
+                BodyMediumText(
                     text = stringResource(R.string.step_counter_with_label).format(
                         gameClearedUiState.stepCount.toInt()
                     )

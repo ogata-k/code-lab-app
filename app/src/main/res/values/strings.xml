@@ -56,6 +56,9 @@
     <string name="start_doc_for_fifteen_puzzle">難しい設定であればあるほどゲームクリア後の得点が高くなるぞ！！</string>
     <string name="grid_size">%s × %s</string>
     <string name="grid_size_with_label">グリッドサイズ: %s × %s</string>
+    <string name="difficulty_with_label">難易度: %s</string>
+    <string name="estimate_difficulty_with_label">推定難易度値（0–100）: %s</string>
+    <string name="estimate_step_count_with_label">推定平均手数: %s</string>
     <string name="step_counter_with_label">手数: %s</string>
     <string name="congratulations">CONGRATULATIONS!!</string>
     <string name="fixed_score">最終スコア</string>

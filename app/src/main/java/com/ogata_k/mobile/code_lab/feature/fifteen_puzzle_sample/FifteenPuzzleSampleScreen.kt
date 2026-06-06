@@ -16,11 +16,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import com.ogata_k.mobile.code_lab.R
 import com.ogata_k.mobile.code_lab.domain.enum.FifteenPuzzleDifficulty
@@ -32,6 +34,7 @@ import com.ogata_k.mobile.code_lab.ui.theme.SpacingXXXS
 import com.ogata_k.mobile.code_lab.ui.widget.button.PullDown
 import com.ogata_k.mobile.code_lab.ui.widget.game.FifteenPuzzleGameBoard
 import com.ogata_k.mobile.code_lab.ui.widget.screen.BasicScaffold
+import com.ogata_k.mobile.code_lab.ui.widget.screen.effect.ConfettiScreen
 import com.ogata_k.mobile.code_lab.ui.widget.text.BodyMediumText
 import com.ogata_k.mobile.code_lab.ui.widget.text.ButtonMediumText
 import com.ogata_k.mobile.code_lab.ui.widget.text.DisplayMediumText
@@ -69,7 +72,6 @@ fun FifteenPuzzleSampleScreen(
                 }
             }
         }
-        // @todo 紙吹雪の表示
     }
 }
 
@@ -159,38 +161,53 @@ fun PlayingBody(
         label = "BounceScale"
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(SpacingS),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    ConfettiScreen { confettiState, size ->
         Column(
-            horizontalAlignment = Alignment.Start,
-            modifier = Modifier.graphicsLayer(
-                scaleX = scale,
-                scaleY = scale
-            )
-        ) {
-            TitleMediumText(
-                stringResource(R.string.step_counter_with_label).format(playingUiState.stepCount),
-                modifier = Modifier.align(Alignment.End),
-            )
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(SpacingM, SpacingS, SpacingS, SpacingS),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        )
+        {
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.graphicsLayer(
+                    scaleX = scale,
+                    scaleY = scale
+                )
+            ) {
+                TitleMediumText(
+                    stringResource(R.string.step_counter_with_label).format(playingUiState.stepCount),
+                    modifier = Modifier.align(Alignment.End),
+                )
 
-            Spacer(Modifier.height(SpacingXXXS))
+                Spacer(Modifier.height(SpacingXXXS))
 
-            Box(contentAlignment = Alignment.Center) {
-                FifteenPuzzleGameBoard(playingUiState.board) {
-                    onIntent(FifteenPuzzleSampleIntent.TapBoardCell(it))
-                }
+                Box(contentAlignment = Alignment.Center) {
+                    FifteenPuzzleGameBoard(playingUiState.board) {
+                        onIntent(FifteenPuzzleSampleIntent.TapBoardCell(it))
+                    }
 
-                if (isPlayClearAnimation) {
-                    TitleLargeText(
-                        text = stringResource(R.string.congratulations),
-                        color = Color.Magenta,
-                        modifier = Modifier.graphicsLayer(scaleX = 1.5f, scaleY = 1.5f)
-                    )
+                    if (isPlayClearAnimation) {
+                        val density = LocalDensity.current
+                        LaunchedEffect(Unit) {
+                            val widthPx = with(density) { size.width.toPx() }
+                            // 全体に雪みたいに散らせるが、下は少し開けた状態で紙吹雪を表示する。
+                            val heightPx = with(density) { (size.height / 3 * 2).toPx() }
+                            confettiState.snow(
+                                width = widthPx,
+                                sourceHeight = heightPx,
+                                durationMillis = 1500L,
+                            )
+                        }
+
+                        TitleLargeText(
+                            text = stringResource(R.string.congratulations),
+                            color = Color.Magenta,
+                            modifier = Modifier.graphicsLayer(scaleX = 1.5f, scaleY = 1.5f)
+                        )
+                    }
                 }
             }
         }

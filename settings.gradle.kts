@@ -24,4 +24,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "CodeLab"
 include(":app")
- 
+include(":domain")
+include(":data")
+include(":common")

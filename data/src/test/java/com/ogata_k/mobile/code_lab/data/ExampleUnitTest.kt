@@ -1,4 +1,4 @@
-package com.ogata_k.mobile.code_lab
+package com.ogata_k.mobile.code_lab.data
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

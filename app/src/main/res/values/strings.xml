@@ -1,3 +1,65 @@
 <resources>
     <string name="app_name">CodeLab</string>
+
+    <!-- 画面タイトル -->
+    <string name="screen_title_counter">カウンター</string>
+    <string name="screen_title_fifteen_puzzle">１５パズル</string>
+
+    <!-- セクションタイトル -->
+    <string name="section_title_slide_duration">スライド速度</string>
+    <string name="section_title_fade_duration">フェードイン速度</string>
+    <string name="section_title_slide_offset_divisor">スライド量</string>
+    <string name="section_title_grid_size">グリッドサイズ</string>
+    <string name="section_title_difficulty">難易度</string>
+
+    <!-- ボタン -->
+    <string name="btn_close">閉じる</string>
+    <string name="btn_back">戻る</string>
+    <string name="btn_confirm">確認</string>
+    <string name="btn_cancel">キャンセル</string>
+    <string name="btn_start">開始</string>
+    <string name="btn_confirm_setting">設定確認</string>
+    <string name="btn_navigate_to_next_game">もう一度遊ぶ</string>
+    <string name="btn_retry">リトライ</string>
+    <string name="btn_change_setting">設定を変更</string>
+
+    <!-- ダイアログ -->
+    <string name="dialog_title_error">エラー</string>
+    <string name="dialog_title_confirm">確認</string>
+    <string name="dialog_content_confirm_fifteen_difficulty_before_play">グリッドサイズ：%s × %s\n難易度：%s\n\nこの設定でゲームを開始します。最高得点は%s点ぐらいになりますが、よろしいですか？</string>
+    <string name="dialog_content_request_navigate_to_next_game">今の設定でゲームをもう一度プレイしますか？\n\nグリッドサイズ：%s × %s\n難易度：%s\n最高得点（推定）：%s</string>
+
+    <!-- スナックバー -->
+    <string name="snackbar_initialized">Initialized</string>
+    <string name="snackbar_value_out_of_range">範囲外の値です</string>
+    <string name="snackbar_invalid_state">不正な状態です</string>
+    <string name="snackbar_difficulty_mismatch">初期化に成功しましたが、目標設定の通りになりませんでした。</string>
+
+    <!-- スナックバーラベル -->
+    <string name="snackbar_label_retry">リトライ</string>
+
+    <!-- プレースホルダー -->
+    <string name="placeholder_select_template">テンプレートを選択してください</string>
+
+    <!-- エラーメッセージ -->
+    <string name="error_unexpected">予期せぬエラーが発生しました。</string>
+
+    <!-- フォーム -->
+    <string name="slide_offset_divisor_full">全高</string>
+    <string name="slide_offset_divisor_half">半分</string>
+    <string name="slide_offset_divisor_subtle">控えめ</string>
+
+    <!-- その他 -->
+    <string name="counter">カウンター</string>
+    <string name="fifteen_puzzle">１５パズル</string>
+    <string name="start_message_for_fifteen_puzzle">グリッドサイズと難易度を選んでゲームを始めよう！！</string>
+    <string name="start_doc_for_fifteen_puzzle">難しい設定であればあるほどゲームクリア後の得点が高くなるぞ！！</string>
+    <string name="grid_size">%s × %s</string>
+    <string name="grid_size_with_label">グリッドサイズ: %s × %s</string>
+    <string name="difficulty_with_label">難易度: %s</string>
+    <string name="estimate_difficulty_with_label">推定難易度値（0–100）: %s</string>
+    <string name="estimate_step_count_with_label">推定平均手数: %s</string>
+    <string name="step_counter_with_label">手数: %s</string>
+    <string name="congratulations">CONGRATULATIONS!!</string>
+    <string name="fixed_score">最終スコア</string>
 </resources>
